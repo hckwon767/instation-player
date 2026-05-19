@@ -2,7 +2,7 @@
   "name": "인스테이션",
   "short_name": "Instation",
   "description": "지금, 당신만의 음악 방송",
-  "start_url": "/instation_player.html",
+  "start_url": "/instation-player/",
   "display": "standalone",
   "background_color": "#0f0c1f",
   "theme_color": "#ff6ec4",
