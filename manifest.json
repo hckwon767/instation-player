@@ -3,7 +3,7 @@
   "short_name": "INSTATION",
   "description": "지금, 당신만의 음악 방송",
   "start_url": "./index.html",
-  "scope": "./"
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#0a0a0f",
