@@ -16,12 +16,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 
-<meta name="theme-color" content="#0f0c1f">
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="icon-192.png">
-  
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 
@@ -616,7 +610,7 @@ function toggleMute(){
 audio.volume=0.85;
 buildTicker();buildFilters();buildGrid();
 
-/* ── PWA Service Worker (예외처리 및 경로 조정) ── */
+// 오류 수정 (작은따옴표 중복 제거)
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('./sw.js', { scope: './' })
