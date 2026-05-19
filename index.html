@@ -403,6 +403,16 @@ audio{display:none}
     min-width: 100px;
   }
 }
+
+/* 앱으로 실행될 때(설치 후)만 적용 */
+@media all and (display-mode: standalone) {
+  .install-banner {
+    display: none;  /* 설치 안내 배너를 숨김 */
+  }
+  body {
+    padding-top: env(safe-area-inset-top); /* 상단 노치 영역 대비 */
+  }
+}
 </style>
 </head>
 <body>
