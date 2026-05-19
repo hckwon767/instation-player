@@ -22,32 +22,21 @@
     color: #fff;
     font-family: 'Noto Sans KR', sans-serif;
     min-height: 100vh;
-    padding: 40px 20px 160px;
+    padding: 40px 20px 180px;
     display: flex;
     flex-direction: column;
     align-items: center;
   }
 
-  header {
-    text-align: center;
-    margin-bottom: 40px;
-  }
-
+  header { text-align: center; margin-bottom: 40px; }
   h1 {
     font-size: 28px;
     font-weight: 700;
     background: linear-gradient(90deg, #ff6ec4, #7873f5);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    letter-spacing: -0.5px;
   }
-
-  .subtitle {
-    color: #b0a0ff;
-    font-size: 15px;
-    margin-top: 8px;
-    opacity: 0.9;
-  }
+  .subtitle { color: #b0a0ff; font-size: 15px; margin-top: 8px; }
 
   .channel-list {
     display: grid;
@@ -58,64 +47,23 @@
     margin-bottom: 40px;
   }
 
-  .ch-btn {
+  .ch-btn { /* 기존 스타일 유지 */ 
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 20px;
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    backdrop-filter: blur(10px);
+    transition: all 0.4s;
   }
-
-  .ch-btn:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(120, 115, 245, 0.25);
-    border-color: rgba(255, 110, 196, 0.4);
-  }
-
-  .ch-btn.active {
-    border-color: #ff6ec4;
-    box-shadow: 0 0 0 3px rgba(255, 110, 196, 0.3);
-    background: rgba(255, 110, 196, 0.12);
-  }
-
-  .ch-btn img {
-    width: 100%;
-    height: 168px;
-    object-fit: cover;
-    transition: transform 0.5s ease;
-  }
-
-  .ch-btn:hover img {
-    transform: scale(1.08);
-  }
-
-  .ch-info {
-    padding: 14px 16px;
-  }
-
+  .ch-btn:hover { transform: translateY(-8px); }
   .ch-info .name {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 4px;
-    line-height: 1.3;
-    color: #ffffff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+    font-size: 15px; font-weight: 600; color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.7);
   }
 
-  .ch-info .tag {
-    font-size: 12px;
-    color: #c8b4ff;
-    opacity: 0.85;
-  }
-
-  /* 하단 고정 플레이어 */
+  /* ==================== 하단 플레이어 ==================== */
   .player-container {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: 0; left: 0; right: 0;
     background: rgba(15, 12, 35, 0.98);
     border-top: 1px solid rgba(255, 110, 196, 0.4);
     backdrop-filter: blur(20px);
@@ -135,8 +83,7 @@
   }
 
   .album-art {
-    width: 52px;
-    height: 52px;
+    width: 52px; height: 52px;
     background: linear-gradient(135deg, #ff6ec4, #7873f5);
     border-radius: 14px;
     display: flex;
@@ -144,61 +91,51 @@
     justify-content: center;
     font-size: 24px;
     flex-shrink: 0;
-    box-shadow: 0 8px 16px rgba(255, 110, 196, 0.4);
   }
 
-  .track-info {
-    flex: 1;
+  .track-info { flex: 1; min-width: 140px; }
+  .track-info .title { font-size: 15px; font-weight: 600; line-height: 1.3; white-space: normal; }
+  .track-info .artist { font-size: 13px; color: #a0a0ff; }
+
+  audio { display: none; } /* 네이티브 컨트롤 숨김 */
+
+  /* 볼륨 컨트롤 */
+  .volume-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     min-width: 140px;
   }
 
-  .track-info .title {
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.3;
-    white-space: normal;
-    word-break: keep-all;
-  }
-
-  .track-info .artist {
-    font-size: 13px;
-    color: #a0a0ff;
-  }
-
-  audio {
+  .volume-slider {
     flex: 1;
-    min-width: 180px;
-    max-width: 340px;
+    accent-color: #ff6ec4;
   }
 
-  .controls button {
+  .volume-btn {
     background: none;
     border: none;
     color: #ddd;
-    font-size: 26px;
+    font-size: 22px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    padding: 6px;
-    transition: all 0.2s;
   }
 
-  .controls button:hover {
+  .controls button, .volume-btn {
+    transition: all 0.2s;
+  }
+  .controls button:hover, .volume-btn:hover {
     color: #ff6ec4;
-    transform: scale(1.15);
+    transform: scale(1.1);
   }
 
   @media (max-width: 480px) {
-    .player-inner { gap: 10px; }
-    .track-info .title { font-size: 14px; }
-    audio { min-width: 160px; }
-  }
-
-  .info-box {
-    max-width: 480px;
-    margin-top: 30px;
-    font-size: 13px;
-    color: #888;
-    text-align: center;
-    line-height: 1.6;
+    .player-inner { gap: 8px; }
+    .volume-control { min-width: 120px; }
   }
 </style>
 </head>
@@ -221,21 +158,25 @@
       <div class="artist" id="artist">Instation</div>
     </div>
 
-    <audio id="audioPlayer" controls></audio>
+    <audio id="audioPlayer"></audio>
 
+    <!-- 재생/일시정지 -->
     <div class="controls">
-      <button onclick="togglePlay()">⏯</button>
+      <button onclick="togglePlay()" id="playBtn">▶</button>
+    </div>
+
+    <!-- 볼륨 컨트롤 -->
+    <div class="volume-control">
+      <button class="volume-btn" onclick="toggleMute()">🔊</button>
+      <input type="range" min="0" max="1" step="0.01" value="1" 
+             class="volume-slider" id="volumeSlider" 
+             oninput="setVolume(this.value)">
     </div>
   </div>
 </div>
 
-<div class="info-box">
-  채널을 선택하면 하단에 플레이어가 나타납니다.<br>
-  홈 화면에 추가하면 앱처럼 사용할 수 있어요.
-</div>
-
 <script>
-const channels = [
+const channels = [ /* 기존 channels 배열 그대로 */ 
   { id: 1,   img: 'ori_img1',   name: '인기가요 TOP 100',        tag: '🎶 가요' },
   { id: 2,   img: 'ori_img2',   name: '빌보드 POP 100',          tag: '🤠 POP' },
   { id: 3,   img: 'ori_img3',   name: '하루종일 신나는 음악',    tag: '음악방송' },
@@ -266,6 +207,7 @@ const channels = [
 const BASE_IMG = 'https://cdn.inlive.co.kr/inLive/image/instation/';
 let currentAudio = document.getElementById('audioPlayer');
 let activeId = null;
+let isMuted = false;
 
 function getPort(id) {
   return 10000 + (id * 10);
@@ -294,7 +236,6 @@ function playChannel(ch) {
   document.querySelector(`[data-id="${ch.id}"]`).classList.add('active');
 }
 
-// 채널 버튼 생성
 const list = document.getElementById('channelList');
 channels.forEach(ch => {
   const btn = document.createElement('button');
@@ -314,10 +255,26 @@ channels.forEach(ch => {
 function togglePlay() {
   if (currentAudio.paused) {
     currentAudio.play();
+    document.getElementById('playBtn').textContent = '❚❚';
   } else {
     currentAudio.pause();
+    document.getElementById('playBtn').textContent = '▶';
   }
 }
+
+function setVolume(value) {
+  currentAudio.volume = parseFloat(value);
+  isMuted = false;
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  currentAudio.muted = isMuted;
+  document.querySelector('.volume-btn').textContent = isMuted ? '🔇' : '🔊';
+}
+
+// 초기 볼륨 설정
+currentAudio.volume = 0.8;
 </script>
 </body>
 </html>
