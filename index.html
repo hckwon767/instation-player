@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>인스테이션 - Instation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: linear-gradient(135deg, #0f0c1f 0%, #1a1328 100%);
+    color: #fff;
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px 120px; /* 하단 플레이어 공간 확보 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #ff6ec4, #7873f5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    color: #b0a0ff;
+    font-size: 15px;
+    margin-top: 8px;
+    opacity: 0.8;
+  }
+
+  .channel-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    gap: 16px;
+    width: 100%;
+    max-width: 1080px;
+    margin-bottom: 40px;
+  }
+
+  .ch-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    backdrop-filter: blur(10px);
+  }
+
+  .ch-btn:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(120, 115, 245, 0.25);
+    border-color: rgba(255, 110, 196, 0.4);
+  }
+
+  .ch-btn.active {
+    border-color: #ff6ec4;
+    box-shadow: 0 0 0 3px rgba(255, 110, 196, 0.3);
+    background: rgba(255, 110, 196, 0.12);
+  }
+
+  .ch-btn img {
+    width: 100%;
+    height: 168px;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .ch-btn:hover img {
+    transform: scale(1.08);
+  }
+
+  .ch-info {
+    padding: 14px 16px;
+  }
+
+  .ch-info .name {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    line-height: 1.3;
+    color: #ffffff;           /* ← 이 줄 추가 또는 수정 */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);  /* 가독성 크게 향상 */
+  }
+
+  .ch-info .tag {
+    font-size: 12px;
+    color: #c8b4ff;
+    opacity: 0.8;
+  }
+
+  /* ===== 고정 하단 플레이어 ===== */
+  .player-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(15, 12, 35, 0.95);
+    border-top: 1px solid rgba(255, 110, 196, 0.3);
+    backdrop-filter: blur(20px);
+    padding: 14px 20px;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    display: none;
+  }
+
+  .player-inner {
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .album-art {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #ff6ec4, #7873f5);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    box-shadow: 0 8px 16px rgba(255, 110, 196, 0.4);
+  }
+
+  .track-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .track-info .title {
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .track-info .artist {
+    color: #a0a0ff;
+    font-size: 13px;
+  }
+
+  audio {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .controls button {
+    background: none;
+    border: none;
+    color: #ddd;
+    font-size: 26px;
+    cursor: pointer;
+    padding: 4px;
+    transition: all 0.2s;
+  }
+
+  .controls button:hover {
+    color: #ff6ec4;
+    transform: scale(1.2);
+  }
+
+  .info-box {
+    max-width: 480px;
+    margin-top: 30px;
+    font-size: 13px;
+    color: #888;
+    text-align: center;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>INSTATION</h1>
+  <p class="subtitle">지금, 당신만의 음악 방송</p>
+</header>
+
+<!-- 채널 목록 -->
+<div class="channel-list" id="channelList"></div>
+
+<!-- 고정 하단 플레이어 -->
+<div class="player-container" id="playerContainer">
+  <div class="player-inner">
+    <div class="album-art" id="albumArt">🎵</div>
+    
+    <div class="track-info">
+      <div class="title" id="title">채널을 선택해주세요</div>
+      <div class="artist" id="artist">Instation</div>
+    </div>
+
+    <audio id="audioPlayer" controls></audio>
+
+    <div class="controls">
+      <button onclick="togglePlay()">⏯</button>
+    </div>
+  </div>
+</div>
+
+<div class="info-box">
+  채널을 선택하면 하단에 플레이어가 나타납니다.<br>
+  스크롤해도 플레이어가 계속 보입니다.
+</div>
+
+<script>
+const channels = [
+  { id: 1,   img: 'ori_img1',   name: '인기가요 TOP 100',        tag: '🎶 가요' },
+  { id: 2,   img: 'ori_img2',   name: '빌보드 POP 100',          tag: '🤠 POP' },
+  { id: 3,   img: 'ori_img3',   name: '하루종일 신나는 음악',    tag: '음악방송' },
+  { id: 4,   img: 'ori_img4',   name: '하루종일 잔잔한 음악',    tag: '음악방송' },
+  { id: 5,   img: 'ori_img5',   name: '가슴을 후벼파는 트로트',  tag: '음악방송' },
+  { id: 6,   img: 'ori_img6',   name: '아이와 함께',             tag: '음악방송' },
+  { id: 7,   img: 'ori_img7',   name: '클래식과 뉴에이지',       tag: '🎹 연주' },
+  { id: 208,   img: 'ori_img18',  name: '응답하라! 추억의 가요',   tag: '📻 추억' },
+  { id: 9,   img: 'ori_img13',  name: '7080 Pop 컬렉션',         tag: '🌳 40대+' },
+  { id: 10,  img: 'ori_img15',  name: '봄에 어울리는 음악',      tag: '음악방송' },
+  { id: 11,  img: 'ori_img14',  name: '영화 OST',                tag: '음악방송' },
+  { id: 12,  img: 'ori_img17',  name: '드라마 OST',              tag: '음악방송' },
+  { id: 13,  img: 'ori_img19',  name: '랩, 힙합',                tag: '음악방송' },
+  { id: 14,  img: 'ori_img16',  name: '정통 재즈',               tag: '재즈' },
+  { id: 206,  img: 'ori_img21',  name: '여름노래',                tag: '음악방송' },
+  { id: 207,  img: 'ori_img22',  name: '가을 감성',               tag: '음악방송' },
+  { id: 209,  img: 'ori_img23',  name: '겨울 포근한 노래',        tag: '음악방송' },
+  { id: 211,  img: 'ori_img119', name: '산뜻한 연주',             tag: '🎹 연주' },
+  { id: 212,  img: 'ori_img120', name: '커피와 재즈',             tag: '재즈' },
+  { id: 213,  img: 'ori_img121', name: '편안한 독서 & 집중',      tag: '음악방송' },
+  { id: 214,  img: 'ori_img122', name: '이지리스닝 연주',         tag: '🎹 연주' },
+  { id: 215,  img: 'ori_img123', name: '힐링 피아노',             tag: '🎹 연주' },
+  { id: 216,  img: 'ori_img124', name: '아침 이지리스닝',         tag: '🎹 연주' },
+  { id: 217,  img: 'ori_img125', name: '재즈힙합 라운지',         tag: '🎹 연주' },
+  { id: 218,  img: 'ori_img126', name: '보사노바 & 라틴',         tag: '🎹 연주' },
+];
+
+const BASE_IMG = 'https://cdn.inlive.co.kr/inLive/image/instation/';
+let currentAudio = document.getElementById('audioPlayer');
+let activeId = null;
+
+function getPort(id) {
+  return 10000 + (id * 10);
+}
+
+function playChannel(ch) {
+  const port = getPort(ch.id);
+  
+  if (activeId === ch.id) {
+    currentAudio.pause();
+    document.getElementById('playerContainer').style.display = 'none';
+    activeId = null;
+    document.querySelectorAll('.ch-btn').forEach(btn => btn.classList.remove('active'));
+    return;
+  }
+
+  activeId = ch.id;
+
+  // 플레이어 표시
+  const player = document.getElementById('playerContainer');
+  player.style.display = 'block';
+
+  document.getElementById('title').textContent = ch.name;
+  document.getElementById('artist').textContent = ch.tag;
+
+  // 오디오 재생
+  currentAudio.src = `https://live01.inlive.co.kr/listen.html?port=${port}`;
+  currentAudio.play().catch(() => {});
+
+  // 버튼 활성화
+  document.querySelectorAll('.ch-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`[data-id="${ch.id}"]`).classList.add('active');
+}
+
+// 채널 버튼 생성
+const list = document.getElementById('channelList');
+channels.forEach(ch => {
+  const btn = document.createElement('button');
+  btn.className = 'ch-btn';
+  btn.dataset.id = ch.id;
+  btn.innerHTML = `
+    <img src="${BASE_IMG}${ch.img}.png" alt="${ch.name}">
+    <div class="ch-info">
+      <div class="name">${ch.name}</div>
+      <div class="tag">${ch.tag}</div>
+    </div>
+  `;
+  btn.addEventListener('click', () => playChannel(ch));
+  list.appendChild(btn);
+});
+
+function togglePlay() {
+  if (currentAudio.paused) {
+    currentAudio.play();
+  } else {
+    currentAudio.pause();
+  }
+}
+</script>
+</body>
+</html>
