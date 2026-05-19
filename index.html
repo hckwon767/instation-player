@@ -485,7 +485,7 @@ buildTicker();buildFilters();buildGrid();
 /* ── PWA Service Worker ── */
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register(''./sw.js', { scope: './' })
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
       .catch(err=>console.warn('SW 등록 실패:',err));
   });
 }
