@@ -1,12 +1,13 @@
 {
   "name": "인스테이션",
-  "short_name": "Instation",
+  "short_name": "인스테이션",
   "description": "지금, 당신만의 음악 방송",
-  "start_url": "/instation-player/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0f0c1f",
   "theme_color": "#ff6ec4",
-  "orientation": "portrait",
   "icons": [
     {
       "src": "icon-192.png",
