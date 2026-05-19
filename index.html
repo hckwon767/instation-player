@@ -37,6 +37,7 @@
   --safe-l:env(safe-area-inset-left,0px);
   --safe-r:env(safe-area-inset-right,0px);
   --player-h:72px;
+  --player-h-mobile:auto;
 }
 
 html{scroll-behavior:smooth}
@@ -202,14 +203,14 @@ body::before{
 @keyframes eq-anim{from{transform:scaleY(0.3)}to{transform:scaleY(1)}}
 .ch-card.hidden-card{display:none}
 
-/* PLAYER */
+/* ========= 플레이어 바 (기본/데스크톱 = 가로 1열) ========= */
 .player-bar{
   position:fixed;bottom:0;left:0;right:0;
-  background:rgba(8,8,12,0.97);
+  background:rgba(8,8,12,0.98);
   border-top:1px solid var(--border-bright);
   backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
   display:none;z-index:1000;
-  /* 높이는 내용에 맞게 auto */
+  height:auto;                     /* 높이 자동 조절 */
   padding-bottom:var(--safe-b);
 }
 .player-bar::before{
@@ -218,52 +219,31 @@ body::before{
   opacity:0.5;
 }
 .player-bar.visible{display:block}
-
-/* ── 데스크톱: 기존 1열 레이아웃 ── */
 .player-inner{
   max-width:1200px;margin:0 auto;
-  padding:0 calc(20px + var(--safe-r)) 0 calc(20px + var(--safe-l));
-  height:72px;
-  display:flex;align-items:center;gap:14px;
-}
-.player-row2{display:none} /* 데스크톱에서 2행 숨김 */
-
-/* ── 모바일: 2행 레이아웃 ── */
-@media(max-width:640px){
-  .player-inner{
-    height:auto;
-    padding:10px calc(16px + var(--safe-r)) 6px calc(16px + var(--safe-l));
-    flex-wrap:wrap;
-    gap:0;
-    align-items:center;
-  }
-  /* 1행: 썸네일 + 채널명/태그 (전체 너비) */
-  .player-thumb-wrap{
-    width:40px;height:40px;
-    margin-right:10px;
-  }
-  .player-info{
-    flex:1;min-width:0;
-  }
-  /* 2행: 주파수 + 재생버튼 + 볼륨 */
-  .player-row2{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    width:100%;
-    margin-top:8px;
-    padding-bottom:4px;
-  }
-  .player-freq{
-    font-size:14px;min-width:unset;flex:1;text-align:left;
-  }
-  .play-btn{
-    width:40px;height:40px;
-  }
-  .play-btn svg{width:16px;height:16px}
-  .vol-wrap{min-width:unset;flex:1.5}
+  padding:10px 20px;
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:14px;
 }
 
+/* 플레이어 상단/하단 그룹 (데스크톱에서는 가로 배치를 위해) */
+.player-top{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex:1;
+  min-width:0;
+}
+.player-bottom{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-shrink:0;
+}
+
+/* 썸네일 + 정보 스타일 */
 .player-thumb-wrap{
   width:46px;height:46px;border-radius:2px;
   border:1px solid var(--border-bright);overflow:hidden;
@@ -271,7 +251,10 @@ body::before{
   display:flex;align-items:center;justify-content:center;font-size:18px;
 }
 .player-thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block}
-.player-info{flex:1;min-width:0}
+.player-info{
+  flex:1;
+  min-width:0;
+}
 .player-ch-name{
   font-size:13px;font-weight:600;color:var(--text);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;
@@ -279,14 +262,13 @@ body::before{
 .player-ch-tag{
   font-family:var(--mono);font-size:9px;
   letter-spacing:0.15em;color:var(--gold);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .player-freq{
   font-family:var(--mono);font-size:18px;font-weight:700;
   color:var(--gold);letter-spacing:0.05em;
   flex-shrink:0;min-width:82px;text-align:right;
 }
-
-/* 재생 버튼 */
 .play-btn{
   width:48px;height:48px;border-radius:50%;
   border:2px solid var(--gold);background:transparent;color:var(--gold);
@@ -299,7 +281,6 @@ body::before{
 .play-btn:active{background:var(--gold);color:#000}
 .play-btn svg{width:18px;height:18px}
 
-/* 볼륨 */
 .vol-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0;min-width:110px}
 .vol-icon{
   background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;
@@ -323,6 +304,105 @@ body::before{
   background:var(--gold);border:none;cursor:pointer;
 }
 audio{display:none}
+
+/* ========= 모바일 전용: 2열 레이아웃, 이름/태그 윗줄, 주파수+버튼 아랫줄 ========= */
+@media (max-width: 640px) {
+  body {
+    /* 플레이어 높이 증가에 맞춰 padding-bottom 조정 */
+    padding-bottom: calc(112px + var(--safe-b) + 16px);
+  }
+  
+  .player-bar {
+    min-height: calc(104px + var(--safe-b));
+  }
+  
+  .player-inner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 20px;
+    gap: 12px;
+  }
+  
+  /* 윗줄: 썸네일 + 이름/태그 영역을 가로로 배치, 이름 풀네임 표시 */
+  .player-top {
+    width: 100%;
+    flex: none;
+    gap: 12px;
+  }
+  
+  .player-info {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  /* 이름 줄바꿈 허용, 가독성 up */
+  .player-ch-name {
+    white-space: normal;
+    word-break: keep-all;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+    margin-bottom: 2px;
+  }
+  
+  .player-ch-tag {
+    white-space: normal;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+  
+  /* 아랫줄: 주파수, 재생버튼, 볼륨 컨트롤을 균등하게 배치 */
+  .player-bottom {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  
+  .player-freq {
+    font-size: 20px;
+    min-width: auto;
+    text-align: left;
+    letter-spacing: 0.02em;
+    flex: 1;
+  }
+  
+  .play-btn {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+  }
+  
+  .vol-wrap {
+    flex: 1.2;
+    min-width: 110px;
+    gap: 8px;
+  }
+  
+  .vol-slider {
+    min-width: 80px;
+  }
+  
+  /* 썸네일 크기 살짝 키움 */
+  .player-thumb-wrap {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+/* 중간 사이즈 태블릿 대응 (선택) */
+@media (min-width: 641px) and (max-width: 900px) {
+  .player-freq {
+    font-size: 16px;
+    min-width: 70px;
+  }
+  .vol-wrap {
+    min-width: 100px;
+  }
+}
 </style>
 </head>
 <body>
@@ -355,28 +435,16 @@ audio{display:none}
 
 <div class="player-bar" id="playerBar">
   <div class="player-inner">
-    <!-- 1행: 썸네일 + 채널명/태그 -->
-    <div class="player-thumb-wrap" id="playerThumbWrap">🎵</div>
-    <div class="player-info">
-      <div class="player-ch-name" id="playerName">–</div>
-      <div class="player-ch-tag" id="playerTag">INSTATION</div>
-    </div>
-    <!-- 데스크톱에서만 보이는 인라인 컨트롤 -->
-    <div class="player-desktop-controls">
-      <div class="player-freq" id="playerFreqD">–</div>
-      <button class="play-btn" id="playBtnD" onclick="togglePlay()" aria-label="재생/일시정지">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <polygon points="5,3 19,12 5,21" id="playIconD"/>
-        </svg>
-      </button>
-      <div class="vol-wrap">
-        <button class="vol-icon" onclick="toggleMute()" id="volIconD" aria-label="음소거">🔊</button>
-        <input type="range" min="0" max="1" step="0.01" value="0.85"
-               class="vol-slider" id="volSliderD" oninput="setVolume(this.value)">
+    <!-- 윗줄: 썸네일 + 방송 정보 (이름/태그) -->
+    <div class="player-top">
+      <div class="player-thumb-wrap" id="playerThumbWrap">🎵</div>
+      <div class="player-info">
+        <div class="player-ch-name" id="playerName">–</div>
+        <div class="player-ch-tag" id="playerTag">INSTATION</div>
       </div>
     </div>
-    <!-- 2행: 모바일에서만 보이는 컨트롤 행 -->
-    <div class="player-row2">
+    <!-- 아랫줄: 주파수, 재생버튼, 볼륨 컨트롤 -->
+    <div class="player-bottom">
       <div class="player-freq" id="playerFreq">–</div>
       <button class="play-btn" id="playBtn" onclick="togglePlay()" aria-label="재생/일시정지">
         <svg viewBox="0 0 24 24" fill="currentColor">
@@ -500,6 +568,7 @@ function playChannel(ch,card,imgSrc){
   activeId=ch.id;
   document.querySelectorAll('.ch-card').forEach(c=>c.classList.remove('active'));
   card.classList.add('active');
+  // 스트림 URL 구성 (기존 방식 유지)
   audio.src=`https://live01.inlive.co.kr/listen.html?port=${getPort(ch.id)}`;
   audio.play().catch(()=>{});
   document.getElementById('playerBar').classList.add('visible');
@@ -541,7 +610,7 @@ function toggleMute(){
 audio.volume=0.85;
 buildTicker();buildFilters();buildGrid();
 
-/* ── PWA Service Worker ── */
+/* ── PWA Service Worker (예외처리 및 경로 조정) ── */
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('./sw.js', { scope: './' })
