@@ -1,13 +1,14 @@
 {
-  "name": "인스테이션",
-  "short_name": "인스테이션",
+  "name": "INSTATION",
+  "short_name": "INSTATION",
   "description": "지금, 당신만의 음악 방송",
-  "start_url": "/instation-player/",
-  "scope": "/instation-player/",
+  "start_url": "./index.html",
+  "scope": "./"
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#0f0c1f",
-  "theme_color": "#0f0c1f",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "lang": "ko",
   "icons": [
     {
       "src": "icon-192.png",
@@ -21,5 +22,7 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "categories": ["music", "entertainment"],
+  "screenshots": []
 }
