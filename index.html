@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>인스테이션 - Instation</title>
+
+<!-- PWA 설정 -->
+<meta name="theme-color" content="#0f0c1f">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192.png">
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
 
@@ -14,7 +22,7 @@
     color: #fff;
     font-family: 'Noto Sans KR', sans-serif;
     min-height: 100vh;
-    padding: 40px 20px 120px; /* 하단 플레이어 공간 확보 */
+    padding: 40px 20px 120px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -83,33 +91,29 @@
     transform: scale(1.08);
   }
 
-  .ch-info {
-    padding: 14px 16px;
-  }
-
   .ch-info .name {
     font-size: 15px;
-    font-weight: 500;
+    font-weight: 600;
     margin-bottom: 4px;
     line-height: 1.3;
-    color: #ffffff;           /* ← 이 줄 추가 또는 수정 */
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);  /* 가독성 크게 향상 */
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
   }
 
   .ch-info .tag {
     font-size: 12px;
     color: #c8b4ff;
-    opacity: 0.8;
+    opacity: 0.85;
   }
 
-  /* ===== 고정 하단 플레이어 ===== */
+  /* 고정 하단 플레이어 */
   .player-container {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(15, 12, 35, 0.95);
-    border-top: 1px solid rgba(255, 110, 196, 0.3);
+    background: rgba(15, 12, 35, 0.96);
+    border-top: 1px solid rgba(255, 110, 196, 0.4);
     backdrop-filter: blur(20px);
     padding: 14px 20px;
     box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
@@ -134,7 +138,6 @@
     align-items: center;
     justify-content: center;
     font-size: 24px;
-    flex-shrink: 0;
     box-shadow: 0 8px 16px rgba(255, 110, 196, 0.4);
   }
 
@@ -193,21 +196,17 @@
   <p class="subtitle">지금, 당신만의 음악 방송</p>
 </header>
 
-<!-- 채널 목록 -->
 <div class="channel-list" id="channelList"></div>
 
-<!-- 고정 하단 플레이어 -->
+<!-- 하단 플레이어 -->
 <div class="player-container" id="playerContainer">
   <div class="player-inner">
     <div class="album-art" id="albumArt">🎵</div>
-    
     <div class="track-info">
       <div class="title" id="title">채널을 선택해주세요</div>
       <div class="artist" id="artist">Instation</div>
     </div>
-
     <audio id="audioPlayer" controls></audio>
-
     <div class="controls">
       <button onclick="togglePlay()">⏯</button>
     </div>
@@ -216,11 +215,11 @@
 
 <div class="info-box">
   채널을 선택하면 하단에 플레이어가 나타납니다.<br>
-  스크롤해도 플레이어가 계속 보입니다.
+  홈 화면에 추가하면 앱처럼 사용할 수 있어요.
 </div>
 
 <script>
-const channels = [
+const channels = [ /* ... 이전과 동일한 채널 배열 ... */ 
   { id: 1,   img: 'ori_img1',   name: '인기가요 TOP 100',        tag: '🎶 가요' },
   { id: 2,   img: 'ori_img2',   name: '빌보드 POP 100',          tag: '🤠 POP' },
   { id: 3,   img: 'ori_img3',   name: '하루종일 신나는 음악',    tag: '음악방송' },
@@ -268,24 +267,17 @@ function playChannel(ch) {
   }
 
   activeId = ch.id;
-
-  // 플레이어 표시
-  const player = document.getElementById('playerContainer');
-  player.style.display = 'block';
-
+  document.getElementById('playerContainer').style.display = 'block';
   document.getElementById('title').textContent = ch.name;
   document.getElementById('artist').textContent = ch.tag;
 
-  // 오디오 재생
   currentAudio.src = `https://live01.inlive.co.kr/listen.html?port=${port}`;
   currentAudio.play().catch(() => {});
 
-  // 버튼 활성화
   document.querySelectorAll('.ch-btn').forEach(btn => btn.classList.remove('active'));
   document.querySelector(`[data-id="${ch.id}"]`).classList.add('active');
 }
 
-// 채널 버튼 생성
 const list = document.getElementById('channelList');
 channels.forEach(ch => {
   const btn = document.createElement('button');
@@ -303,11 +295,8 @@ channels.forEach(ch => {
 });
 
 function togglePlay() {
-  if (currentAudio.paused) {
-    currentAudio.play();
-  } else {
-    currentAudio.pause();
-  }
+  if (currentAudio.paused) currentAudio.play();
+  else currentAudio.pause();
 }
 </script>
 </body>
