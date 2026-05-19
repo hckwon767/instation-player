@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>인스테이션 - Instation</title>
 
 <!-- PWA 설정 -->
@@ -22,7 +22,7 @@
     color: #fff;
     font-family: 'Noto Sans KR', sans-serif;
     min-height: 100vh;
-    padding: 40px 20px 120px;
+    padding: 40px 20px 160px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -46,7 +46,7 @@
     color: #b0a0ff;
     font-size: 15px;
     margin-top: 8px;
-    opacity: 0.8;
+    opacity: 0.9;
   }
 
   .channel-list {
@@ -91,6 +91,10 @@
     transform: scale(1.08);
   }
 
+  .ch-info {
+    padding: 14px 16px;
+  }
+
   .ch-info .name {
     font-size: 15px;
     font-weight: 600;
@@ -106,17 +110,17 @@
     opacity: 0.85;
   }
 
-  /* 고정 하단 플레이어 */
+  /* 하단 고정 플레이어 */
   .player-container {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(15, 12, 35, 0.96);
+    background: rgba(15, 12, 35, 0.98);
     border-top: 1px solid rgba(255, 110, 196, 0.4);
     backdrop-filter: blur(20px);
-    padding: 14px 20px;
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
+    padding: 12px 16px;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.7);
     z-index: 1000;
     display: none;
   }
@@ -126,42 +130,45 @@
     margin: 0 auto;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 
   .album-art {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
     background: linear-gradient(135deg, #ff6ec4, #7873f5);
     border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px;
+    flex-shrink: 0;
     box-shadow: 0 8px 16px rgba(255, 110, 196, 0.4);
   }
 
   .track-info {
     flex: 1;
-    min-width: 0;
+    min-width: 140px;
   }
 
   .track-info .title {
     font-size: 15px;
     font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.3;
+    white-space: normal;
+    word-break: keep-all;
   }
 
   .track-info .artist {
-    color: #a0a0ff;
     font-size: 13px;
+    color: #a0a0ff;
   }
 
   audio {
-    width: 100%;
-    max-width: 320px;
+    flex: 1;
+    min-width: 180px;
+    max-width: 340px;
   }
 
   .controls button {
@@ -170,13 +177,19 @@
     color: #ddd;
     font-size: 26px;
     cursor: pointer;
-    padding: 4px;
+    padding: 6px;
     transition: all 0.2s;
   }
 
   .controls button:hover {
     color: #ff6ec4;
-    transform: scale(1.2);
+    transform: scale(1.15);
+  }
+
+  @media (max-width: 480px) {
+    .player-inner { gap: 10px; }
+    .track-info .title { font-size: 14px; }
+    audio { min-width: 160px; }
   }
 
   .info-box {
@@ -202,11 +215,14 @@
 <div class="player-container" id="playerContainer">
   <div class="player-inner">
     <div class="album-art" id="albumArt">🎵</div>
+    
     <div class="track-info">
       <div class="title" id="title">채널을 선택해주세요</div>
       <div class="artist" id="artist">Instation</div>
     </div>
+
     <audio id="audioPlayer" controls></audio>
+
     <div class="controls">
       <button onclick="togglePlay()">⏯</button>
     </div>
@@ -219,7 +235,7 @@
 </div>
 
 <script>
-const channels = [ /* ... 이전과 동일한 채널 배열 ... */ 
+const channels = [
   { id: 1,   img: 'ori_img1',   name: '인기가요 TOP 100',        tag: '🎶 가요' },
   { id: 2,   img: 'ori_img2',   name: '빌보드 POP 100',          tag: '🤠 POP' },
   { id: 3,   img: 'ori_img3',   name: '하루종일 신나는 음악',    tag: '음악방송' },
@@ -278,6 +294,7 @@ function playChannel(ch) {
   document.querySelector(`[data-id="${ch.id}"]`).classList.add('active');
 }
 
+// 채널 버튼 생성
 const list = document.getElementById('channelList');
 channels.forEach(ch => {
   const btn = document.createElement('button');
@@ -295,8 +312,11 @@ channels.forEach(ch => {
 });
 
 function togglePlay() {
-  if (currentAudio.paused) currentAudio.play();
-  else currentAudio.pause();
+  if (currentAudio.paused) {
+    currentAudio.play();
+  } else {
+    currentAudio.pause();
+  }
 }
 </script>
 </body>
