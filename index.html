@@ -244,8 +244,6 @@ body::before{
   color:var(--gold);letter-spacing:0.05em;
   flex-shrink:0;min-width:82px;text-align:right;
 }
-@media(max-width:480px){.player-freq{display:none}}
-
 /* 재생 버튼 — 44×44 최소 터치 영역 */
 .play-btn{
   width:48px;height:48px;border-radius:50%;
@@ -259,9 +257,8 @@ body::before{
 .play-btn:active{background:var(--gold);color:#000}
 .play-btn svg{width:18px;height:18px}
 
-/* 볼륨 */
+/* 볼륨 — 항상 표시 */
 .vol-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0;min-width:110px}
-@media(max-width:480px){.vol-wrap{min-width:unset}.vol-slider{display:none}}
 .vol-icon{
   background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;
   /* 터치 영역 44×44 */
