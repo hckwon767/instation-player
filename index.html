@@ -778,6 +778,7 @@ audio.addEventListener('playing',()=>{
 });
 audio.addEventListener('waiting',()=>{
   setOnAir(false);           // 버퍼링 중 → ON AIR 끔
+  startAutoSkipTimer();      // 오류 시 즉시 스킵 타이머 시작
 });
 audio.addEventListener('pause',()=>{
   setOnAir(false);
