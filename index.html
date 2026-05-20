@@ -773,6 +773,17 @@ if('serviceWorker' in navigator){
       .catch(err=>console.warn('SW 등록 실패:',err));
   });
 }
+
+/* 플레이어 바 높이에 맞게 body padding-bottom 동적 조정 */
+function adjustBodyPadding(){
+  const bar = document.getElementById('playerBar');
+  if(bar.classList.contains('visible')){
+    document.body.style.paddingBottom = (bar.offsetHeight + 16) + 'px';
+  }
+}
+const resizeObserver = new ResizeObserver(adjustBodyPadding);
+resizeObserver.observe(document.getElementById('playerBar'));
+window.addEventListener('resize', adjustBodyPadding);
 </script>
 </body>
 </html>
