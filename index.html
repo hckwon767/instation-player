@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-startup-image" href="icon-512.png">
 <link rel="manifest" href="manifest.json">
-<title>INSTATION — IMMERSIVE RADIO</title>
+<title>INSTATION</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 
@@ -20,400 +20,473 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 
 :root{
-  --bg:#0a0a0f;
-  --surface:#111118;
-  --surface2:#18181f;
-  --border:rgba(255,255,255,0.07);
-  --border-bright:rgba(255,180,60,0.35);
+  --bg:#07070a;
+  --surface:rgba(20,20,28,0.45);
+  --surface-hover:rgba(30,30,42,0.65);
+  --surface-active:rgba(255,183,64,0.08);
+  --border:rgba(255,255,255,0.05);
+  --border-bright:rgba(245,183,64,0.3);
   --gold:#f5b740;
   --gold2:#e8960a;
   --text:#e8e0d0;
-  --text-muted:#7a7268;
-  --text-dim:#4a4642;
-  --red:#e84545;
+  --text-muted:#8a8278;
+  --text-dim:#5a5652;
+  --red:#ff4a4a;
   --mono:'Space Mono',monospace;
   --sans:'Noto Sans KR',sans-serif;
   --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
   --safe-l:env(safe-area-inset-left,0px);
   --safe-r:env(safe-area-inset-right,0px);
-  --player-h:144px;
-  --player-h-mobile:auto;
+  --player-h:96px;
+  --mobile-player-bg: linear-gradient(135deg, #18181f 0%, #0f1016 100%);
 }
 
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;height:100%}
 
 body{
   background:var(--bg);
   color:var(--text);
   font-family:var(--sans);
   min-height:100vh;
-  padding:0 var(--safe-r) calc(var(--player-h) + var(--safe-b) + 20px) var(--safe-l);
+  padding:0 var(--safe-r) calc(var(--player-h) + var(--safe-b) + 30px) var(--safe-l);
   overflow-x:hidden;
   user-select:none;
   -webkit-user-select:none;
   -webkit-tap-highlight-color:transparent;
   touch-action:pan-y;
+  position:relative;
 }
 
+/* 글로벌 오버레이 디테일 (유리 반사 및 미세 노이즈 효과) */
 body::before{
   content:'';
   position:fixed;inset:0;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 12%),
+    repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);
   pointer-events:none;
   z-index:9999;
 }
 
-/* IMMERSIVE ALBUM BACKGROUND LAYERS (DESKTOP) */
+/* =========================================
+   IMMERSIVE ALBUM BACKGROUND (시네마틱 배경)
+========================================= */
 .bg-art-layer{
   position:fixed;
   inset:0;
   z-index:-3;
   background-size:cover;
   background-position:center;
-  filter:blur(40px) brightness(0.2);
-  transform:scale(1.12);
+  filter:blur(60px) brightness(0.23);
+  transform:scale(1.15);
   opacity:0;
-  transition:opacity 900ms cubic-bezier(0.2, 0.9, 0.4, 1.1);
+  transition:opacity 1200ms cubic-bezier(0.25, 1, 0.5, 1), background-image 0ms linear;
   will-change:opacity;
   pointer-events:none;
 }
-
-/* desktop: fullscreen immersive */
-@media (min-width: 641px){
-  .bg-art-layer.active{
-    opacity:1;
-  }
+.bg-art-layer.active{
+  opacity:1;
 }
 
-/* mobile: only inside player-bar (avoid fullscreen pollution) */
-@media (max-width: 640px){
-  .bg-art-layer{
-    display:none;
-  }
-
-  .player-bar{
-    overflow:hidden;
-    position:relative;
-  }
-
-  .player-bar::after{
-    content:'';
-    position:absolute;
-    inset:0;
-    background:var(--mobile-player-bg, linear-gradient(135deg, #18181f 0%, #0f1016 100%));
-    background-size:cover;
-    background-position:center;
-    filter:blur(40px) brightness(0.22);
-    transform:scale(1.15);
-    opacity:0.96;
-    z-index:-1;
-    pointer-events:none;
-    transition:background-image 900ms ease, opacity 600ms ease;
-  }
-
-  .player-bar > *{
-    position:relative;
-    z-index:2;
-  }
+/* 타임리스 오버레이 */
+.bg-vignette{
+  position:fixed;inset:0;
+  background:radial-gradient(circle at center, transparent 20%, rgba(5,5,8,0.6) 100%);
+  z-index:-2;
+  pointer-events:none;
 }
 
 /* HEADER */
 .header{
-  padding:28px 20px 20px;
+  padding:40px 24px 24px;
   display:flex;align-items:flex-end;justify-content:space-between;
   border-bottom:1px solid var(--border);
-  max-width:1200px;margin:0 auto;
+  max-width:1300px;margin:0 auto;
 }
 .logo-wordmark{
-  font-family:var(--mono);font-size:26px;font-weight:700;
-  letter-spacing:0.15em;color:var(--gold);line-height:1;
+  font-family:var(--mono);font-size:28px;font-weight:700;
+  letter-spacing:0.18em;color:var(--gold);line-height:1;
+  text-shadow: 0 0 20px rgba(245,183,64,0.2);
 }
 .logo-sub{
-  font-family:var(--mono);font-size:9px;letter-spacing:0.28em;
-  color:var(--text-muted);margin-top:5px;
+  font-family:var(--mono);font-size:10px;letter-spacing:0.3em;
+  color:var(--text-muted);margin-top:7px;text-transform:uppercase;
 }
-.header-right{display:flex;align-items:center;gap:10px}
-.signal-bars{display:flex;align-items:flex-end;gap:3px;height:20px}
+.header-right{display:flex;align-items:center;gap:14px}
+.signal-bars{display:flex;align-items:flex-end;gap:3px;height:18px}
 .signal-bars span{
-  width:4px;background:var(--gold);border-radius:1px;opacity:0.2;transition:opacity 0.3s;
+  width:3px;background:var(--gold);border-radius:1px;opacity:0.15;transition:opacity 0.3s;
 }
-.signal-bars span:nth-child(1){height:7px}
-.signal-bars span:nth-child(2){height:12px}
-.signal-bars span:nth-child(3){height:16px}
-.signal-bars span:nth-child(4){height:20px}
+.signal-bars span:nth-child(1){height:6px}
+.signal-bars span:nth-child(2){height:10px}
+.signal-bars span:nth-child(3){height:14px}
+.signal-bars span:nth-child(4){height:18px}
 .signal-bars.active span{animation:pulse-bar 1.4s ease-in-out infinite}
 .signal-bars.active span:nth-child(1){animation-delay:0s}
 .signal-bars.active span:nth-child(2){animation-delay:0.15s}
 .signal-bars.active span:nth-child(3){animation-delay:0.3s}
 .signal-bars.active span:nth-child(4){animation-delay:0.45s}
 @keyframes pulse-bar{0%,100%{opacity:0.15}50%{opacity:1}}
+
 .on-air{
-  font-family:var(--mono);font-size:9px;letter-spacing:0.2em;
-  padding:5px 9px;border:1px solid var(--red);color:var(--red);
-  border-radius:3px;opacity:0;transition:opacity 0.3s;
+  font-family:var(--mono);font-size:10px;letter-spacing:0.25em;
+  padding:4px 10px;border:1px solid var(--red);color:var(--red);
+  border-radius:3px;opacity:0;transition:all 0.3s;
+  font-weight:700;
 }
-.on-air.active{opacity:1;animation:blink-on-air 1.5s ease-in-out infinite}
-@keyframes blink-on-air{0%,100%{opacity:1}50%{opacity:0.3}}
+.on-air.active{opacity:1;box-shadow: 0 0 10px rgba(255,74,74,0.2); animation:blink-on-air 1.8s ease-in-out infinite}
+@keyframes blink-on-air{0%,100%{opacity:1}50%{opacity:0.4}}
 
 /* TICKER */
 .ticker-wrap{
-  overflow:hidden;background:var(--surface);
-  border-bottom:1px solid var(--border);padding:7px 0;
+  overflow:hidden;background:rgba(10,10,15,0.5);
+  border-bottom:1px solid var(--border);padding:9px 0;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
 }
 .ticker-inner{
   display:flex;white-space:nowrap;
-  animation:ticker 45s linear infinite;
+  animation:ticker 50s linear infinite;
 }
 .ticker-item{
-  font-family:var(--mono);font-size:10px;
-  color:var(--text-muted);letter-spacing:0.1em;padding:0 36px;
+  font-family:var(--mono);font-size:11px;
+  color:var(--text-muted);letter-spacing:0.12em;padding:0 40px;
 }
-.ticker-item::before{content:'◆  ';color:var(--gold)}
+.ticker-item::before{content:'◆  ';color:var(--gold);margin-right:4px}
 @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
 /* FILTER */
 .filter-wrap{
-  max-width:1200px;margin:0 auto;
-  padding:16px 20px 0;
+  max-width:1300px;margin:0 auto;
+  padding:24px 24px 0;
   overflow-x:auto;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;
 }
 .filter-wrap::-webkit-scrollbar{display:none}
-.filter-section{display:flex;gap:7px;flex-wrap:nowrap;width:max-content}
+.filter-section{display:flex;gap:8px;flex-wrap:nowrap;width:max-content}
 .filter-btn{
-  font-family:var(--mono);font-size:10px;letter-spacing:0.12em;
-  padding:0 14px;min-height:36px;display:flex;align-items:center;
-  background:transparent;border:1px solid var(--border);color:var(--text-muted);
-  border-radius:2px;cursor:pointer;transition:all 0.2s;white-space:nowrap;
+  font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.05em;
+  padding:0 18px;min-height:38px;display:flex;align-items:center;
+  background:rgba(255,255,255,0.02);border:1px solid var(--border);color:var(--text-muted);
+  border-radius:20px;cursor:pointer;transition:all 0.25s ease;white-space:nowrap;
 }
-@media(hover:hover){.filter-btn:hover{border-color:var(--gold2);color:var(--gold)}}
-.filter-btn.active{background:var(--gold);color:#000;border-color:var(--gold);font-weight:700}
+@media(hover:hover){
+  .filter-btn:hover{border-color:var(--border-bright);color:var(--text);background:rgba(255,255,255,0.05)}
+}
+.filter-btn.active{background:var(--gold);color:#050508;border-color:var(--gold);font-weight:700;box-shadow:0 4px 15px rgba(245,183,64,0.25)}
 
 /* GRID */
-.grid-section{max-width:1200px;margin:20px auto 0;padding:0 20px}
+.grid-section{max-width:1300px;margin:30px auto 0;padding:0 24px}
 .section-label{
-  font-family:var(--mono);font-size:9px;letter-spacing:0.3em;
-  color:var(--text-dim);text-transform:uppercase;margin-bottom:14px;padding-left:2px;
+  font-family:var(--mono);font-size:10px;letter-spacing:0.35em;
+  color:var(--text-dim);text-transform:uppercase;margin-bottom:18px;padding-left:4px;
+  font-weight:700;
 }
 .channel-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  gap:2px;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:16px;
 }
 
-/* CARD */
+/* CARD (글래스모피즘 스타일 고도화) */
 .ch-card{
   position:relative;background:var(--surface);
-  border:1px solid var(--border);cursor:pointer;
-  overflow:hidden;aspect-ratio:1/1.1;
+  border:1px solid var(--border);border-radius:12px;cursor:pointer;
+  overflow:hidden;aspect-ratio:1/1.15;
   display:flex;flex-direction:column;
-  transition:border-color 0.2s;
+  transition:all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
 }
 .ch-card::before{
   content:'';position:absolute;inset:0;
-  background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.92) 100%);
+  background:linear-gradient(180deg,transparent 30%,rgba(7,7,10,0.95) 100%);
   z-index:1;
 }
 @media(hover:hover){
-  .ch-card:hover{border-color:var(--border-bright);z-index:2;transform:scale(1.02)}
-  .ch-card:hover .ch-thumb{transform:scale(1.07)}
+  .ch-card:hover{
+    border-color:var(--border-bright);z-index:2;
+    transform:translateY(-6px);
+    background:var(--surface-hover);
+    box-shadow:0 12px 24px rgba(0,0,0,0.4);
+  }
+  .ch-card:hover .ch-thumb{transform:scale(1.06)}
 }
-@media(hover:none){.ch-card:active{border-color:var(--border-bright);opacity:0.82}}
-.ch-card.active{border-color:var(--gold)}
+@media(hover:none){.ch-card:active{border-color:var(--border-bright);opacity:0.85}}
+.ch-card.active{border-color:var(--gold);background:var(--surface-active);box-shadow:0 0 20px rgba(245,183,64,0.15)}
 .ch-card.active::after{
   content:'';position:absolute;top:0;left:0;right:0;
-  height:2px;background:var(--gold);z-index:10;
+  height:3px;background:var(--gold);z-index:10;
 }
 .ch-num{
-  position:absolute;top:8px;left:10px;
-  font-family:var(--mono);font-size:9px;
-  color:var(--gold);letter-spacing:0.1em;z-index:3;opacity:0.6;
+  position:absolute;top:12px;left:14px;
+  font-family:var(--mono);font-size:10px;font-weight:700;
+  color:var(--gold);letter-spacing:0.05em;z-index:3;
+  background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:4px;
 }
 .ch-thumb{
   width:100%;height:100%;object-fit:cover;display:block;
-  transition:transform 0.4s ease;position:absolute;inset:0;
+  transition:transform 0.5s ease;position:absolute;inset:0;
 }
 .ch-thumb-placeholder{
-  position:absolute;inset:0;background:var(--surface2);
-  display:flex;align-items:center;justify-content:center;font-size:28px;
+  position:absolute;inset:0;background:#181822;
+  display:flex;align-items:center;justify-content:center;font-size:32px;
 }
-.ch-info{position:absolute;bottom:0;left:0;right:0;padding:10px;z-index:3}
+.ch-info{position:absolute;bottom:0;left:0;right:0;padding:16px;z-index:3}
 .ch-tag{
-  font-family:var(--mono);font-size:8px;letter-spacing:0.18em;
-  color:var(--gold);text-transform:uppercase;margin-bottom:3px;opacity:0.85;
+  font-family:var(--mono);font-size:9px;letter-spacing:0.2em;
+  color:var(--gold);text-transform:uppercase;margin-bottom:5px;font-weight:700;
 }
-.ch-name{font-size:12px;font-weight:500;color:#fff;line-height:1.3;text-shadow:0 1px 4px rgba(0,0,0,0.9)}
-.ch-playing-badge{position:absolute;top:8px;right:8px;z-index:5;display:none}
+.ch-name{font-size:14px;font-weight:600;color:#fff;line-height:1.4;text-shadow:0 2px 4px rgba(0,0,0,0.8)}
+.ch-playing-badge{
+  position:absolute;top:12px;right:14px;z-index:5;
+  background:rgba(0,0,0,0.4);padding:4px;border-radius:4px;
+  display:none;align-items:center;justify-content:center;
+}
 .ch-card.active .ch-playing-badge{display:flex}
-.ch-playing-badge svg{width:16px;height:16px}
-.eq-bar{animation:eq-anim 0.6s ease-in-out infinite alternate;transform-origin:bottom}
+.ch-playing-badge svg{width:14px;height:14px}
+.eq-bar{animation:eq-anim 0.5s ease-in-out infinite alternate;transform-origin:bottom}
 .eq-bar:nth-child(2){animation-delay:0.15s}
 .eq-bar:nth-child(3){animation-delay:0.3s}
-@keyframes eq-anim{from{transform:scaleY(0.3)}to{transform:scaleY(1)}}
+@keyframes eq-anim{from{transform:scaleY(0.2)}to{transform:scaleY(1)}}
 .ch-card.hidden-card{display:none}
 
-/* ========= 플레이어 바 ========= */
+/* =========================================
+   PLAYER BAR (데스크탑 고급 플레이어 바)
+========================================= */
 .player-bar{
   position:fixed;bottom:0;left:0;right:0;
-  background:rgba(8,8,12,0.98);
-  border-top:1px solid var(--border-bright);
-  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  background:rgba(10,10,15,0.82);
+  border-top:1px solid rgba(255,255,255,0.06);
+  backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);
   display:none;z-index:1000;
-  height:auto;
-  padding-bottom:var(--safe-b);
+  height:var(--player-h);
 }
 .player-bar::before{
   content:'';position:absolute;top:0;left:0;right:0;
   height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);
-  opacity:0.5;
+  opacity:0.3;
 }
 .player-bar.visible{display:block}
 .player-inner{
-  max-width:1200px;margin:0 auto;
-  padding:10px 20px;
-  display:flex;flex-direction:row;align-items:center;gap:14px;
+  max-width:1300px;margin:0 auto;height:100%;
+  padding:0 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:30px;
 }
 .player-top{
-  display:flex;align-items:center;gap:14px;
+  display:flex;align-items:center;gap:18px;
   flex:1;min-width:0;
 }
 .player-bottom{
-  display:flex;align-items:center;gap:14px;flex-shrink:0;
+  display:flex;align-items:center;gap:30px;flex-shrink:0;
 }
 .player-freq{
   font-family:var(--mono);font-size:18px;font-weight:700;
   color:var(--gold);letter-spacing:0.05em;
-  flex-shrink:0;min-width:82px;text-align:right;
+  min-width:80px;text-align:right;
 }
 .play-btn{
-  width:48px;height:48px;border-radius:50%;
+  width:52px;height:52px;border-radius:50%;
   border:2px solid var(--gold);background:transparent;color:var(--gold);
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;flex-shrink:0;
-  transition:background 0.15s,color 0.15s;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
-@media(hover:hover){.play-btn:hover{background:var(--gold);color:#000}}
-.play-btn:active{background:var(--gold);color:#000}
-.play-btn svg{width:18px;height:18px}
-.vol-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0;min-width:110px}
+@media(hover:hover){
+  .play-btn:hover{background:var(--gold);color:#050508;transform:scale(1.05);box-shadow:0 0 15px rgba(245,183,64,0.4)}
+}
+.play-btn:active{background:var(--gold);color:#050508;transform:scale(0.95)}
+.play-btn svg{width:20px;height:20px;transition:fill 0.2s}
+.vol-wrap{display:flex;align-items:center;gap:10px;min-width:140px}
 .vol-icon{
   background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;
-  min-width:44px;min-height:44px;
   display:flex;align-items:center;justify-content:center;
-  transition:color 0.2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:color 0.2s;
 }
 @media(hover:hover){.vol-icon:hover{color:var(--gold)}}
-.vol-icon:active{color:var(--gold)}
 .vol-slider{
   flex:1;-webkit-appearance:none;appearance:none;
-  height:3px;background:var(--surface2);border-radius:2px;
-  outline:none;border:none;cursor:pointer;min-width:60px;
+  height:4px;background:rgba(255,255,255,0.1);border-radius:2px;
+  outline:none;cursor:pointer;
 }
 .vol-slider::-webkit-slider-thumb{
-  -webkit-appearance:none;width:14px;height:14px;
-  border-radius:50%;background:var(--gold);cursor:pointer;
+  -webkit-appearance:none;width:12px;height:12px;
+  border-radius:50%;background:var(--gold);cursor:pointer;transition:transform 0.1s;
 }
+@media(hover:hover){.vol-slider::-webkit-slider-thumb:hover{transform:scale(1.3)}}
 .vol-slider::-moz-range-thumb{
-  width:14px;height:14px;border-radius:50%;
+  width:12px;height:12px;border-radius:50%;
   background:var(--gold);border:none;cursor:pointer;
 }
-audio{display:none}
 
-/* ── 앨범아트 ── */
+/* 앨범아트 (바 버전) */
 .now-playing-album{
-  width:144px;height:144px;
-  border-radius:4px;flex-shrink:0;overflow:hidden;
-  background:var(--surface2);border:1px solid var(--border-bright);
-  display:flex;align-items:center;justify-content:center;font-size:24px;
-  transition:box-shadow 0.3s;
+  width:64px;height:64px;
+  border-radius:8px;flex-shrink:0;overflow:hidden;
+  background:#181822;border:1px solid rgba(255,255,255,0.1);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
 }
 .now-playing-album img{width:100%;height:100%;object-fit:cover;display:block}
 .now-playing-album .album-placeholder{
   width:100%;height:100%;
-  display:flex;align-items:center;justify-content:center;font-size:26px;
+  display:flex;align-items:center;justify-content:center;
 }
 
-/* ── 곡 정보 텍스트 + 마퀴 ── */
+/* 곡 정보 텍스트 및 마퀴 */
 .now-playing-track{flex:1;min-width:0;overflow:hidden}
 .np-ch-tag{
-  font-family:var(--mono);font-size:13px;letter-spacing:0.2em;
-  color:var(--gold);margin-bottom:4px;opacity:0.85;
-  text-transform:uppercase;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-family:var(--mono);font-size:11px;letter-spacing:0.15em;
+  color:var(--gold);margin-bottom:2px;font-weight:700;
+  text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .np-marquee{
-  overflow:hidden;
-  position:relative;
-  -webkit-mask-image:linear-gradient(to right, transparent 0%, black 4%, black 92%, transparent 100%);
-  mask-image:linear-gradient(to right, transparent 0%, black 4%, black 92%, transparent 100%);
+  overflow:hidden;position:relative;
+  -webkit-mask-image:linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
+  mask-image:linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
 }
-.np-marquee.short{
-  -webkit-mask-image:none;
-  mask-image:none;
-}
-.np-marquee-inner{
-  display:inline-block;
-  white-space:nowrap;
-}
+.np-marquee.short{-webkit-mask-image:none;mask-image:none}
+.np-marquee-inner{display:inline-block;white-space:nowrap}
 .np-marquee.scrolling .np-marquee-inner{
   animation:marquee-scroll var(--marquee-dur, 12s) linear infinite;
 }
 @keyframes marquee-scroll{
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(var(--marquee-dist, -50%)); }
+  0%   {transform:translateX(0)}
+  100% {transform:translateX(var(--marquee-dist, -50%))}
 }
-.np-title-text{
-  font-size:30px;font-weight:600;color:var(--text);
-  line-height:1.35;
-}
-.np-artist-text{
-  font-size:23px;color:var(--text-muted);
-  line-height:1.35;margin-top:2px;
-}
-.np-loading{
-  font-family:var(--mono);font-size:9px;color:var(--text-dim);
-  animation:np-blink 1.2s ease-in-out infinite;
-}
+.np-title-text{font-size:16px;font-weight:600;color:#fff;line-height:1.4}
+.np-artist-text{font-size:13px;color:var(--text-muted);line-height:1.4;margin-top:1px}
+
+.np-loading{font-family:var(--mono);font-size:11px;color:var(--text-dim);animation:np-blink 1.2s ease-in-out infinite}
 @keyframes np-blink{0%,100%{opacity:1}50%{opacity:0.3}}
-.np-spin{display:inline-block;animation:np-rotate 1s linear infinite;}
+.np-spin{display:inline-block;animation:np-rotate 1s linear infinite;font-size:14px}
 @keyframes np-rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-/* ========= 모바일 ========= */
+audio{display:none}
+
+/* =========================================
+   MOBILE 하단 네비게이션 & 레이아웃 탭 시스템
+========================================= */
+/* 모바일 네비게이션 바 기본 비활성화 (데스크탑) */
+.mobile-nav-tabs{display:none}
+
+/* 모바일 전용 모크 인터페이스 소품 (비주얼 프로그레스 폼) */
+.mobile-player-progress{display:none}
+
 @media (max-width: 640px) {
-  body { padding-bottom: calc(100px + var(--safe-b) + 16px); }
-  .player-bar { min-height: calc(92px + var(--safe-b)); }
-  .player-inner { flex-direction:column;align-items:stretch;padding:10px 16px;gap:10px; }
-  .player-top { width:100%;flex:none;gap:12px; }
-  .now-playing-album { width:128px;height:128px; }
-  .np-title-text { font-size:30px; }
-  .np-artist-text { font-size:23px; }
-  .player-bottom { width:100%;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:10px; }
-  .player-freq { font-size:18px;min-width:auto;text-align:left;flex:1; }
-  .play-btn { width:52px;height:52px;flex-shrink:0; }
-  .vol-wrap { flex:1.2;min-width:100px;gap:8px; }
-  .vol-slider { min-width:70px; }
-}
-@media (min-width:641px) and (max-width:900px) {
-  .player-freq { font-size:16px;min-width:70px; }
-  .vol-wrap { min-width:100px; }
-}
-@media all and (display-mode:standalone) {
-  .install-banner { display:none; }
-  body { padding-top:env(safe-area-inset-top); }
+  body { 
+    padding-top: var(--safe-t);
+    padding-bottom: calc(70px + var(--safe-b)); 
+  }
+  
+  .header { padding: 24px 20px 16px; }
+  
+  /* 모바일 네비게이션 탭 바 활성화 */
+  .mobile-nav-tabs {
+    display:flex;position:fixed;bottom:0;left:0;right:0;
+    height:calc(64px + var(--safe-b));
+    background:rgba(12,12,18,0.96);
+    border-top:1px solid rgba(255,255,255,0.06);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    z-index:2000;padding-bottom:var(--safe-b);
+  }
+  .nav-tab-btn {
+    flex:1;background:none;border:none;color:var(--text-muted);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;font-size:10px;font-family:var(--mono);letter-spacing:0.1em;
+    cursor:pointer;transition:all 0.2s;
+  }
+  .nav-tab-btn svg { width:20px;height:20px;fill:currentColor }
+  .nav-tab-btn.active { color:var(--gold) }
+
+  /* 탭 콘텐츠 활성화 제어용 클래스 */
+  body.tab-channels .grid-section,
+  body.tab-channels .filter-wrap,
+  body.tab-channels .ticker-wrap { display:block }
+  body.tab-channels .player-bar { display:none !important } /* 바 모드 숨김 */
+  
+  /* 플레이어 탭 모드일 때: 플레이어 화면을 Apple Music처럼 이머시브 풀스크린화 */
+  body.tab-player .grid-section,
+  body.tab-player .filter-wrap,
+  body.tab-player .ticker-wrap { display:none }
+  
+  body.tab-player .player-bar.visible {
+    display:block !important;position:fixed;inset:0;
+    height:calc(100vh - 64px - var(--safe-b));
+    background:transparent;border:none;padding-top:40px;
+  }
+  
+  body.tab-player .player-bar::after {
+    content:'';position:absolute;inset:0;
+    background:
+      radial-gradient(circle at top, rgba(255,255,255,0.04), transparent 60%),
+      var(--mobile-player-bg);
+    background-size:cover;background-position:center;
+    filter:blur(50px) brightness(0.25);transform:scale(1.2);
+    opacity:0.95;z-index:-1;
+    transition:background-image 900ms ease;
+  }
+
+  body.tab-player .player-inner {
+    flex-direction:column;justify-content:center;align-items:center;
+    height:100%;padding:30px 24px;gap:40px;
+  }
+  
+  body.tab-player .player-top {
+    flex-direction:column;width:100%;flex:none;gap:34px;text-align:center;
+  }
+  
+  /* 모바일 풀스크린 상태에서의 대형 이미지 연출 */
+  body.tab-player .now-playing-album {
+    width:280px;height:280px;border-radius:16px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.6);
+    border:1px solid rgba(255,255,255,0.15);
+  }
+  body.tab-player .now-playing-album img { width:100%;height:100% }
+  
+  body.tab-player .np-title-text { font-size:24px;font-weight:700 }
+  body.tab-player .np-artist-text { font-size:17px;margin-top:6px;color:var(--text-muted) }
+  body.tab-player .np-ch-tag { font-size:12px;margin-bottom:6px }
+
+  /* 이미지 속 비주얼 프로그레스 타임라인 연출 */
+  body.tab-player .mobile-player-progress {
+    display:block;width:100%;margin-top:10px;
+  }
+  .progress-bar-mock {
+    width:100%;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;position:relative;
+  }
+  .progress-bar-fill {
+    position:absolute;left:0;top:0;bottom:0;width:35%;background:var(--gold);border-radius:2px;
+  }
+  .progress-time-labels {
+    display:flex;justify-content:between;width:100%;font-family:var(--mono);
+    font-size:11px;color:var(--text-dim);margin-top:8px;
+  }
+  .progress-time-labels span:last-child { margin-left:auto }
+
+  body.tab-player .player-bottom {
+    width:100%;flex-direction:column;gap:24px;align-items:center;
+  }
+  
+  /* 모바일 풀스크린 하단 컨트롤 배치 조율 */
+  body.tab-player .player-bottom-controls {
+    display:flex;align-items:center;justify-content:center;gap:40px;width:100%;
+  }
+  
+  body.tab-player .player-freq { font-size:16px;min-width:auto;text-align:center;color:var(--text-muted) }
+  body.tab-player .play-btn { width:68px;height:68px;background:rgba(255,255,255,0.03) }
+  body.tab-player .play-btn svg { width:24px;height:24px }
+  body.tab-player .vol-wrap { width:100%;max-width:260px;margin:0 auto }
 }
 </style>
 </head>
-<body>
-
-<!-- IMMERSIVE BACKGROUND LAYERS (DESKTOP) -->
-<div class="bg-art-layer bg-art-a"></div>
+<body class="tab-channels"> <div class="bg-art-layer bg-art-a"></div>
 <div class="bg-art-layer bg-art-b"></div>
+<div class="bg-vignette"></div>
 
 <header class="header">
   <div class="logo">
     <div class="logo-wordmark">INSTATION</div>
-    <div class="logo-sub">지금, 당신만의 음악 방송</div>
+    <div class="logo-sub">PREMIUM RADIO STATION</div>
   </div>
   <div class="header-right">
     <div class="signal-bars" id="signalBars">
@@ -454,15 +527,28 @@ audio{display:none}
             <span class="np-artist-text" id="npArtist"></span>
           </div>
         </div>
+        
+        <div class="mobile-player-progress">
+          <div class="progress-bar-mock">
+            <div class="progress-bar-fill"></div>
+          </div>
+          <div class="progress-time-labels">
+            <span>1:24</span>
+            <span>4:50</span>
+          </div>
+        </div>
       </div>
     </div>
+    
     <div class="player-bottom">
-      <div class="player-freq" id="playerFreq">–</div>
-      <button class="play-btn" id="playBtn" onclick="togglePlay()" aria-label="재생/일시정지">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <polygon points="5,3 19,12 5,21" id="playIcon"/>
-        </svg>
-      </button>
+      <div class="player-bottom-controls">
+        <div class="player-freq" id="playerFreq">–</div>
+        <button class="play-btn" id="playBtn" onclick="togglePlay()" aria-label="재생/일시정지">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5,3 19,12 5,21" id="playIcon"/>
+          </svg>
+        </button>
+      </div>
       <div class="vol-wrap">
         <button class="vol-icon" onclick="toggleMute()" id="volIcon" aria-label="음소거">🔊</button>
         <input type="range" min="0" max="1" step="0.01" value="1.00"
@@ -471,6 +557,17 @@ audio{display:none}
     </div>
   </div>
 </div>
+
+<nav class="mobile-nav-tabs">
+  <button class="nav-tab-btn active" id="tabBtnChannels" onclick="switchMobileTab('channels')">
+    <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+    CHANNELS
+  </button>
+  <button class="nav-tab-btn" id="tabBtnPlayer" onclick="switchMobileTab('player')">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+    PLAYER
+  </button>
+</nav>
 
 <audio id="audioEl"></audio>
 
@@ -516,51 +613,25 @@ function fakeFreq(id){
   return (87.5+(108-87.5)/channels.length*idx).toFixed(1)+' FM';
 }
 
-/* ========= IMMERSIVE BACKGROUND ENGINE ========= */
-const FALLBACK_BACKGROUNDS = [
-  'linear-gradient(135deg,#1d1f27 0%,#0a0a0f 100%)',
-  'linear-gradient(135deg,#24191b 0%,#0a0a0f 100%)',
-  'linear-gradient(135deg,#182127 0%,#0a0a0f 100%)',
-  'linear-gradient(135deg,#211826 0%,#0a0a0f 100%)'
-];
-
-let activeBgLayer = 'a';
-let lastAppliedArtUrl = null;
-
-function getFallbackBackground(){
-  if(activeId){
-    return FALLBACK_BACKGROUNDS[activeId % FALLBACK_BACKGROUNDS.length];
-  }
-  return FALLBACK_BACKGROUNDS[0];
-}
-
-function setImmersiveBackground(imageUrl){
-  const nextLayer = activeBgLayer === 'a'
-    ? document.querySelector('.bg-art-b')
-    : document.querySelector('.bg-art-a');
-  const currentLayer = activeBgLayer === 'a'
-    ? document.querySelector('.bg-art-a')
-    : document.querySelector('.bg-art-b');
-
-  const bgValue = imageUrl ? `url("${imageUrl}")` : getFallbackBackground();
-
-  nextLayer.style.backgroundImage = bgValue;
-  nextLayer.classList.add('active');
-  currentLayer.classList.remove('active');
-  activeBgLayer = activeBgLayer === 'a' ? 'b' : 'a';
-  lastAppliedArtUrl = imageUrl || null;
-
-  // Mobile: set CSS variable for player-bar ::after background
-  if(window.innerWidth <= 640){
-    if(imageUrl){
-      document.documentElement.style.setProperty('--mobile-player-bg', `url("${imageUrl}")`);
-    }else{
-      document.documentElement.style.setProperty('--mobile-player-bg', getFallbackBackground());
-    }
+/* 모바일 전용 탭 컨트롤 스위처 기능 */
+function switchMobileTab(target) {
+  const body = document.body;
+  const btnChannels = document.getElementById('tabBtnChannels');
+  const btnPlayer = document.getElementById('tabBtnPlayer');
+  
+  if (target === 'channels') {
+    body.classList.remove('tab-player');
+    body.classList.add('tab-channels');
+    btnChannels.classList.add('active');
+    btnPlayer.classList.remove('active');
+  } else if (target === 'player') {
+    body.classList.remove('tab-channels');
+    body.classList.add('tab-player');
+    btnPlayer.classList.add('active');
+    btnChannels.classList.remove('active');
   }
 }
 
-/* ── 마퀴 스크롤 설정 ── */
 function applyMarquee(marqueeEl, innerEl, textEl){
   marqueeEl.classList.remove('scrolling','short');
   innerEl.style.animation='';
@@ -570,18 +641,22 @@ function applyMarquee(marqueeEl, innerEl, textEl){
   requestAnimationFrame(()=>{
     const containerW = marqueeEl.offsetWidth;
     const textW      = textEl.offsetWidth;
+
     if(textW <= containerW){
       marqueeEl.classList.add('short');
       return;
     }
+
     const gap = 80;
     const cloneSpan = textEl.cloneNode(true);
     cloneSpan.classList.add('np-marquee-clone');
     cloneSpan.style.paddingLeft = gap + 'px';
     innerEl.appendChild(cloneSpan);
+
     const totalW  = textW + gap;
     const speed   = 60;
     const dur     = totalW / speed;
+
     innerEl.style.setProperty('--marquee-dist', `-${totalW}px`);
     innerEl.style.setProperty('--marquee-dur',  `${dur}s`);
     marqueeEl.classList.add('scrolling');
@@ -663,6 +738,7 @@ function playChannel(ch,card,imgSrc){
   document.getElementById('playerBar').classList.add('visible');
   document.getElementById('playerTag').textContent=ch.tag.toUpperCase();
   document.getElementById('playerFreq').textContent=fakeFreq(ch.id);
+  
   setMarqueeText('titleMarquee','titleInner','npTitle','–');
   setMarqueeText('artistMarquee','artistInner','npArtist','');
   document.getElementById('nowPlayingAlbum').innerHTML='<div class="album-placeholder">🎵</div>';
@@ -704,10 +780,46 @@ function toggleMute(){
 audio.volume=1.00;
 buildTicker();buildFilters();buildGrid();
 
-/* NOW PLAYING & BACKGROUND SYNC */
+/* =============================================
+   NOW PLAYING ENGINE & BACKWARDS COMPATIBILITY
+   ============================================= */
 let npTimer=null;
 let lastTrackStr='';
 let currentArtUrl=null;
+
+const FALLBACK_BACKGROUNDS = [
+  'linear-gradient(135deg,#1d1f27 0%,#0a0a0f 100%)',
+  'linear-gradient(135deg,#24191b 0%,#0a0a0f 100%)',
+  'linear-gradient(135deg,#182127 0%,#0a0a0f 100%)',
+  'linear-gradient(135deg,#211826 0%,#0a0a0f 100%)'
+];
+
+let activeBgLayer = 'a';
+
+function getFallbackBackground(){
+  return FALLBACK_BACKGROUNDS[activeId % FALLBACK_BACKGROUNDS.length];
+}
+
+function setImmersiveBackground(imageUrl){
+  const nextLayer = activeBgLayer === 'a' ? document.querySelector('.bg-art-b') : document.querySelector('.bg-art-a');
+  const currentLayer = activeBgLayer === 'a' ? document.querySelector('.bg-art-a') : document.querySelector('.bg-art-b');
+
+  if(imageUrl){
+    nextLayer.style.backgroundImage = `url("${imageUrl}")`;
+  }else{
+    nextLayer.style.backgroundImage = getFallbackBackground();
+  }
+
+  nextLayer.classList.add('active');
+  currentLayer.classList.remove('active');
+  activeBgLayer = activeBgLayer === 'a' ? 'b' : 'a';
+
+  if(imageUrl){
+    document.documentElement.style.setProperty('--mobile-player-bg', `url("${imageUrl}")`);
+  }else{
+    document.documentElement.style.setProperty('--mobile-player-bg', getFallbackBackground());
+  }
+}
 
 async function fetchStatsMeta(port){
   const url=`https://live01.inlive.co.kr/stats.html?port=${port}`;
@@ -724,7 +836,7 @@ async function fetchStatsMeta(port){
     }
     return parseStatsHtml(await res.text());
   }catch(e){
-    console.debug('[NP] stats fetch fail:', e.message);
+    console.debug('[NP] stats.html fetch 실패:', e.message);
     return null;
   }
 }
@@ -757,7 +869,7 @@ async function fetchStatsMetaViaProxy(port){
     if(data.contents) return parseStatsHtml(data.contents);
     return null;
   }catch(e){
-    console.debug('[NP] proxy fail:', e.message);
+    console.debug('[NP] proxy fetch 실패:', e.message);
     return null;
   }
 }
@@ -765,7 +877,10 @@ async function fetchStatsMetaViaProxy(port){
 async function fetchAlbumArt(artist,title){
   try{
     const q=encodeURIComponent((artist?`${artist} `:'')+title);
-    const res=await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=3`,{cache:'default'});
+    const res=await fetch(
+      `https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=3`,
+      {cache:'default'}
+    );
     if(!res.ok) return null;
     const data=await res.json();
     if(!data.results?.length) return null;
@@ -787,9 +902,7 @@ function updateNowPlayingUI(artist, title, artUrl, loading=false){
   setMarqueeText('artistMarquee','artistInner','npArtist', artist||'');
 
   if(artUrl !== undefined){
-    // IMMERSIVE: update background crossfade
     setImmersiveBackground(artUrl || null);
-    
     albumEl.innerHTML='';
     if(artUrl){
       const img=new Image();
@@ -839,7 +952,6 @@ function stopNowPlaying(){
   setMarqueeText('artistMarquee','artistInner','npArtist','');
   document.getElementById('nowPlayingAlbum').innerHTML='<div class="album-placeholder">🎵</div>';
   lastTrackStr='';currentArtUrl=null;
-  // reset background to fallback (graceful)
   setImmersiveBackground(null);
 }
 
@@ -850,28 +962,19 @@ if('serviceWorker' in navigator){
   });
 }
 
-/* dynamic padding adjust */
 function adjustBodyPadding(){
-  const bar = document.getElementById('playerBar');
-  if(bar.classList.contains('visible')){
-    document.body.style.paddingBottom = (bar.offsetHeight + 16) + 'px';
+  if(window.innerWidth > 640) {
+    const bar = document.getElementById('playerBar');
+    if(bar.classList.contains('visible')){
+      document.body.style.paddingBottom = (bar.offsetHeight + 30) + 'px';
+    }
+  } else {
+    document.body.style.paddingBottom = 'calc(70px + env(safe-area-inset-bottom, 0px))';
   }
 }
 const resizeObserver = new ResizeObserver(adjustBodyPadding);
 resizeObserver.observe(document.getElementById('playerBar'));
 window.addEventListener('resize', adjustBodyPadding);
-
-/* initialize immersive background with fallback */
-setImmersiveBackground(null);
-
-/* resize listener to reapply correct background mode (desktop ↔ mobile) without flicker */
-window.addEventListener('resize', () => {
-  if(lastAppliedArtUrl !== undefined){
-    setImmersiveBackground(lastAppliedArtUrl);
-  } else {
-    setImmersiveBackground(null);
-  }
-});
 </script>
 </body>
 </html>
