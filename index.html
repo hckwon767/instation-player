@@ -1012,16 +1012,24 @@ function playChannel(ch,card){
 
   setPlayIcon(true);
   setOnAir(false);
+  isSkipping=false;          // 새 채널 진입 — 이벤트 감지 재개 (타이머 세팅 전에 초기화)
   startAutoSkipTimer();      // 60초 내 playing 없으면 다음 채널
-  isSkipping=false;          // 새 채널 진입 완료 — 이벤트 감지 재개
   setImmersiveBg(null);
   startNowPlaying();
 }
 
 function togglePlay(){
   if(!activeId)return;
-  if(audio.paused){audio.play().catch(()=>{});setPlayIcon(true);startNowPlaying();startAutoSkipTimer()}
-  else{audio.pause();setPlayIcon(false);stopNowPlaying()}
+  if(audio.paused){
+    audio.play().catch(()=>{});
+    setPlayIcon(true);
+    startNowPlaying();
+    startAutoSkipTimer();  // 재생 재개 시에만 타이머 시작
+  }else{
+    audio.pause();
+    setPlayIcon(false);
+    stopNowPlaying();      // 내부에서 clearAutoSkipTimer() 호출
+  }
 }
 
 /* ── 플레이어 제어 아이콘 동기화 수정 ── */
