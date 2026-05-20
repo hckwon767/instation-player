@@ -14,7 +14,9 @@
 <link rel="manifest" href="manifest.json">
 <title>INSTATION</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet"></noscript>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 
@@ -302,24 +304,17 @@ body::before{
 @keyframes marquee-scroll{0%{transform:translateX(0)}100%{transform:translateX(var(--marquee-dist,-50%))}}
 .dp-title {
   font-size: 32px; font-weight: 600; color: var(--text); line-height: 1.35;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5); /* 💡 추가 */
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
 }
-.dp-artist { 
-  font-size: 20px; 
-  color: var(--text); /* 타이틀과 동일한 기본 흰색 계열로 변경 */
-  white-space: nowrap; 
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* 배경에 묻히지 않게 그림자 추가 */
+.dp-artist {
+  font-size: 20px; color: var(--text);
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 /* 모바일 풀스크린 타이틀 & 아티스트 */
 .mp-title {
   font-size: 32px; font-weight: 700; color: var(--text); line-height: 1.2;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 0, 0, 0.6); /* 💡 추가 */
-}
-.mp-artist { 
-  font-size: 20px; 
-  color: var(--text); /* 타이틀과 동일한 기본 흰색 계열로 변경 */
-  margin-top: 4px; 
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); /* 배경에 묻히지 않게 그림자 추가 */
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 0, 0, 0.6);
 }
 .np-loading{font-family:var(--mono);font-size:9px;color:var(--text-dim);animation:np-blink 1.2s ease-in-out infinite}
 @keyframes np-blink{0%,100%{opacity:1}50%{opacity:0.3}}
@@ -440,7 +435,7 @@ audio{display:none}
 .mp-artist-marquee.short{-webkit-mask-image:none;mask-image:none}
 .mp-artist-inner{display:inline-block;white-space:nowrap}
 .mp-artist-marquee.scrolling .mp-artist-inner{animation:marquee-scroll var(--marquee-dur,12s) linear infinite}
-.mp-artist{font-size:22px;color:var(--text-muted)}
+.mp-artist{font-size:22px;color:var(--text);margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,0.8)}
 
 /* 주파수 */
 .mp-freq{
@@ -620,7 +615,7 @@ audio{display:none}
     <div class="dp-controls">
       <div class="dp-freq" id="dpFreq">–</div>
       <button class="play-btn" id="dpPlayBtn" onclick="togglePlay()" aria-label="재생/일시정지">
-        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" id="dpPlayIcon"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
       </button>
       <div class="vol-wrap">
         <button class="vol-icon" onclick="toggleMute()" id="dpVolIcon">🔊</button>
@@ -682,7 +677,7 @@ audio{display:none}
         </button>
         
         <button class="mp-play-btn" id="mpPlayBtn" onclick="togglePlay()" aria-label="재생/일시정지">
-          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" id="mpPlayIcon"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
         </button>
         
         <button class="mp-side-btn" onclick="playNextChannel()" aria-label="다음 채널">
@@ -766,7 +761,7 @@ function switchTab(tab){
   document.getElementById('tabChannels').classList.toggle('active',!isPlayer);
   document.getElementById('tabPlayer').classList.toggle('active',isPlayer);
   document.getElementById('mobileChannels').style.display=isPlayer?'none':'block';
-  document.getElementById('mobilePlayer').style.display=isPlayer?'flex':'none';
+  document.getElementById('mobilePlayer').classList.toggle('active',isPlayer);
 }
 
 /* ── 마퀴 ── */
@@ -840,11 +835,19 @@ function setImmersiveBg(imageUrl){
 
 /* ── 빌드 ── */
 function buildTicker(){
-  const names=channels.map(c=>c.name);
-  const html=[...names,...names].map(n=>`<span class="ticker-item">${n}</span>`).join('');
+  const frag=()=>{
+    const f=document.createDocumentFragment();
+    [...channels,...channels].forEach(c=>{
+      const s=document.createElement('span');
+      s.className='ticker-item';
+      s.textContent=c.name;
+      f.appendChild(s);
+    });
+    return f;
+  };
   const t=document.getElementById('ticker'),mt=document.getElementById('mobTicker');
-  if(t) t.innerHTML=html;
-  if(mt) mt.innerHTML=html;
+  if(t){t.innerHTML='';t.appendChild(frag())}
+  if(mt){mt.innerHTML='';mt.appendChild(frag())}
 }
 
 function buildFilters(){
@@ -864,7 +867,7 @@ function buildFilters(){
 
 function applyFilter(cat){
   document.querySelectorAll('.filter-btn').forEach(b=>{
-    b.classList.toggle('active',b.textContent===cat);
+    b.classList.toggle('active',b.textContent.trim()===cat);
   });
   document.querySelectorAll('.ch-card,.mob-ch-card').forEach(c=>{
     c.classList.toggle('hidden-card',cat!=='ALL'&&c.dataset.cat!==cat);
@@ -875,21 +878,21 @@ function applyFilter(cat){
   });
 }
 
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
 function buildGrid(){
-  // 데스크탑
   const grid=document.getElementById('channelGrid');
-  // 모바일
   const mobGrid=document.getElementById('mobChannelGrid');
 
   channels.forEach((ch,i)=>{
     const imgSrc=`${BASE_IMG}${ch.img}.png`;
     const inner=`
       <div class="ch-top-line"></div>
-      <img class="ch-thumb" src="${imgSrc}" alt="${ch.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <img class="ch-thumb" src="${imgSrc}" alt="${esc(ch.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
       <div class="ch-thumb-placeholder" style="display:none">🎵</div>
       <div class="ch-num">CH ${String(i+1).padStart(2,'0')}</div>
       <div class="ch-playing-badge"><svg viewBox="0 0 18 18" fill="#f5b740"><rect class="eq-bar" x="1" y="4" width="3" height="10" rx="1"/><rect class="eq-bar" x="7" y="2" width="3" height="14" rx="1"/><rect class="eq-bar" x="13" y="5" width="3" height="9" rx="1"/></svg></div>
-      <div class="ch-info"><div class="ch-tag">${ch.tag}</div><div class="ch-name">${ch.name}</div></div>`;
+      <div class="ch-info"><div class="ch-tag">${esc(ch.tag)}</div><div class="ch-name">${esc(ch.name)}</div></div>`;
 
     if(grid){
       const card=document.createElement('div');
@@ -912,43 +915,27 @@ function buildGrid(){
 }
 
 /* ── 플레이어 제어 ── */
-/* ── 이전 채널 재생 ── */
 function playPrevChannel() {
   if (!activeId) return;
-  // 현재 재생 중인 채널의 인덱스 찾기
   let idx = channels.findIndex(c => c.id === activeId);
   if (idx === -1) return;
-  
-  // 이전 인덱스로 이동 (첫 채널이면 마지막 채널로 회전)
   idx = (idx - 1 + channels.length) % channels.length;
-  
-  const nextCh = channels[idx];
-  // 해당 채널의 DOM 카드를 찾아서 전달 (없으면 null)
-  const card = document.querySelector(`.mob-ch-card[data-id="${nextCh.id}"]`);
-  playChannel(nextCh, card);
+  playChannel(channels[idx], null);
 }
 
-/* ── 다음 채널 재생 ── */
 function playNextChannel() {
   if (!activeId) return;
-  // 현재 재생 중인 채널의 인덱스 찾기
   let idx = channels.findIndex(c => c.id === activeId);
   if (idx === -1) return;
-  
-  // 다음 인덱스로 이동 (마지막 채널이면 첫 채널로 회전)
   idx = (idx + 1) % channels.length;
-  
-  const nextCh = channels[idx];
-  const card = document.querySelector(`.mob-ch-card[data-id="${nextCh.id}"]`);
-  playChannel(nextCh, card);
+  playChannel(channels[idx], null);
 }
 
 function playChannel(ch,card){
   if(activeId===ch.id){togglePlay();return}
   activeId=ch.id;
   document.querySelectorAll('.ch-card').forEach(c=>c.classList.remove('active'));
-  if(card) card.classList.add('active');
-  // 같은 채널 양쪽 카드 모두 active
+  // Activate all cards matching this channel (desktop + mobile)
   document.querySelectorAll(`.ch-card[data-id="${ch.id}"]`).forEach(c=>c.classList.add('active'));
 
   audio.src=`https://live01.inlive.co.kr/listen.html?port=${getPort(ch.id)}`;
@@ -958,7 +945,7 @@ function playChannel(ch,card){
 
   // 데스크탑 업데이트
   document.getElementById('desktopPlayer').classList.add('visible');
-  document.getElementById('dpTag').textContent=ch.tag.toUpperCase();
+  document.getElementById('dpTag').textContent=ch.name;
   document.getElementById('dpFreq').textContent=freq;
   setMarqueeText('dpTitleMarquee','dpTitleInner','dpTitle','–');
   setMarqueeText('dpArtistMarquee','dpArtistInner','dpArtist','');
@@ -967,7 +954,7 @@ function playChannel(ch,card){
   dpAlbum.classList.remove('has-art');
 
   // 모바일 플레이어 업데이트
-  document.getElementById('mpTag').textContent=ch.tag.toUpperCase();
+  document.getElementById('mpTag').textContent=ch.name;
   document.getElementById('mpFreq').textContent=freq;
   setMarqueeText('mpTitleMarquee','mpTitleInner','mpTitle','–');
   setMarqueeText('mpArtistMarquee','mpArtistInner','mpArtist','');
@@ -1024,8 +1011,11 @@ let npTimer=null,lastTrackStr='',currentArtUrl=null;
 
 async function fetchStatsMeta(port){
   try{
+    const ctrl=new AbortController();
+    const tid=setTimeout(()=>ctrl.abort(),5000);
     const res=await fetch(`https://live01.inlive.co.kr/stats.html?port=${port}`,
-      {cache:'no-store',headers:{'Accept':'text/html,application/json,*/*'}});
+      {cache:'no-store',headers:{'Accept':'text/html,application/json,*/*'},signal:ctrl.signal});
+    clearTimeout(tid);
     if(!res.ok)return null;
     const ct=res.headers.get('content-type')||'';
     if(ct.includes('json')){
@@ -1056,7 +1046,10 @@ function parseArtistTitle(artist,raw){
 }
 async function fetchStatsMetaViaProxy(port){
   try{
-    const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://live01.inlive.co.kr/stats.html?port=${port}`)}`,{cache:'no-store'});
+    const ctrl=new AbortController();
+    const tid=setTimeout(()=>ctrl.abort(),5000);
+    const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://live01.inlive.co.kr/stats.html?port=${port}`)}`,{cache:'no-store',signal:ctrl.signal});
+    clearTimeout(tid);
     if(!res.ok)return null;
     const d=await res.json();
     return d.contents?parseStatsHtml(d.contents):null;
@@ -1073,6 +1066,7 @@ async function fetchAlbumArt(artist,title){
   }catch(e){return null}
 }
 
+let _artLoadImgs=[];
 function updateNowPlayingUI(artist,title,artUrl,loading=false){
   const dpAlbum=document.getElementById('dpAlbum');
   const mpAlbum=document.getElementById('mpAlbum');
@@ -1094,10 +1088,14 @@ function updateNowPlayingUI(artist,title,artUrl,loading=false){
   setMarqueeText('mpArtistMarquee','mpArtistInner','mpArtist',artist||'');
 
   if(artUrl!==undefined){
+    // abort any in-flight image loads
+    _artLoadImgs.forEach(img=>{img.onload=null;img.onerror=null;img.src=''});
+    _artLoadImgs=[];
     if(artUrl){
       [dpAlbum,mpAlbum].forEach(albumEl=>{
         const img=new Image();
-        img.alt=title;
+        _artLoadImgs.push(img);
+        img.alt=title||'';
         img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';
         img.onload=()=>{albumEl.innerHTML='';albumEl.appendChild(img);albumEl.classList.add('has-art')};
         img.onerror=()=>{albumEl.innerHTML='<div class="album-placeholder">🎵</div>';albumEl.classList.remove('has-art')};
@@ -1156,7 +1154,10 @@ function adjustBodyPadding(){
   if(bar&&bar.classList.contains('visible'))
     document.getElementById('desktopView').style.paddingBottom=(bar.offsetHeight+20)+'px';
 }
-new ResizeObserver(adjustBodyPadding).observe(document.getElementById('desktopPlayer'));
+const _dpBar=document.getElementById('desktopPlayer');
+if(_dpBar){
+  new ResizeObserver(adjustBodyPadding).observe(_dpBar);
+}
 window.addEventListener('resize',adjustBodyPadding);
 
 if('serviceWorker' in navigator){
