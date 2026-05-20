@@ -57,8 +57,7 @@ body{
 
 body::before{
   content:'';
-  position:fixed;
-  inset:0;
+  position:fixed;inset:0;
   background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);
   pointer-events:none;
   z-index:9999;
@@ -330,7 +329,86 @@ audio{display:none}
 .np-spin{display:inline-block;animation:np-rotate 1s linear infinite;}
 @keyframes np-rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-/* ========= 모바일 ========= */
+/* =========================================
+   IMMERSIVE ALBUM BACKGROUND
+========================================= */
+
+.bg-art-layer{
+  position:fixed;
+  inset:0;
+  z-index:-3;
+
+  background-size:cover;
+  background-position:center;
+
+  filter:blur(40px) brightness(0.2);
+  transform:scale(1.12);
+
+  opacity:0;
+  transition:
+    opacity 900ms ease,
+    background-image 0ms linear;
+
+  will-change:opacity;
+  pointer-events:none;
+}
+
+/* 데스크탑에서만 전체 배경 */
+@media (min-width: 641px){
+  .bg-art-layer.active{
+    opacity:1;
+  }
+}
+
+/* 모바일에서는 player 내부만 */
+@media (max-width: 640px){
+
+  .bg-art-layer{
+    display:none;
+  }
+
+  .player-bar{
+    overflow:hidden;
+  }
+
+  .player-bar::after{
+    content:'';
+    position:absolute;
+    inset:0;
+
+    background:
+      radial-gradient(circle at top left,
+      rgba(255,255,255,0.06),
+      transparent 40%),
+      var(--mobile-player-bg, linear-gradient(
+        135deg,
+        #18181f 0%,
+        #0f1016 100%
+      ));
+
+    background-size:cover;
+    background-position:center;
+
+    filter:blur(40px) brightness(0.22);
+    transform:scale(1.15);
+
+    opacity:0.95;
+
+    z-index:-1;
+    pointer-events:none;
+
+    transition:
+      background-image 900ms ease,
+      opacity 600ms ease;
+  }
+
+  .player-bar > *{
+    position:relative;
+    z-index:2;
+  }
+}
+
+/* ========= 모바일 기본 ========= */
 @media (max-width: 640px) {
   body { padding-bottom: calc(100px + var(--safe-b) + 16px); }
   .player-bar { min-height: calc(92px + var(--safe-b)); }
@@ -355,52 +433,13 @@ audio{display:none}
   .install-banner { display:none; }
   body { padding-top:env(safe-area-inset-top); }
 }
-
-/* ========= 배경 앨범아트 레이어 (추가, 기존 코드 훼손 없음) ========= */
-.bg-artwork-layer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  filter: blur(40px) brightness(0.2);
-  transition: opacity 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  pointer-events: none;
-  z-index: -2;
-}
-.bg-artwork-layer.fallback {
-  background-image: radial-gradient(circle at 30% 20%, #1e1a2f, #0a0a0f 80%);
-}
-.bg-fade-container {
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-}
-
-/* ========= 플레이어 바 배경 투명화 (배경 아트가 비치도록) ========= */
-.player-bar {
-  background: transparent !important;
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-}
-.player-bar::before {
-  opacity: 0.2;
-}
 </style>
 </head>
 <body>
 
-<!-- 배경 아트 레이어 (크로스페이드) -->
-<div class="bg-fade-container" id="bgFadeContainer">
-  <div class="bg-artwork-layer" id="bgLayer1" style="opacity: 1;"></div>
-  <div class="bg-artwork-layer" id="bgLayer2" style="opacity: 0;"></div>
-</div>
+<!-- Immersive background layers -->
+<div class="bg-art-layer bg-art-a"></div>
+<div class="bg-art-layer bg-art-b"></div>
 
 <header class="header">
   <div class="logo">
@@ -467,7 +506,6 @@ audio{display:none}
 <audio id="audioEl"></audio>
 
 <script>
-// ======================= 기존 코드 (수정 없음, 완전 동일) =======================
 document.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('dragstart',e=>e.preventDefault());
 document.addEventListener('selectstart',e=>e.preventDefault());
@@ -503,13 +541,58 @@ const BASE_IMG='https://cdn.inlive.co.kr/inLive/image/instation/';
 const audio=document.getElementById('audioEl');
 let activeId=null,isMuted=false;
 
+/* ========= IMMERSIVE BACKGROUND (Album Art Crossfade) ========= */
+const FALLBACK_BACKGROUNDS = [
+  'linear-gradient(135deg,#1d1f27 0%,#0a0a0f 100%)',
+  'linear-gradient(135deg,#24191b 0%,#0a0a0f 100%)',
+  'linear-gradient(135deg,#182127 0%,#0a0a0f 100%)',
+  'linear-gradient(135deg,#211826 0%,#0a0a0f 100%)'
+];
+
+let activeBgLayer = 'a';
+
+function getFallbackBackground(){
+  let idx = 0;
+  if(activeId) idx = activeId % FALLBACK_BACKGROUNDS.length;
+  return FALLBACK_BACKGROUNDS[idx];
+}
+
+function setImmersiveBackground(imageUrl){
+  const nextLayer = activeBgLayer === 'a'
+    ? document.querySelector('.bg-art-b')
+    : document.querySelector('.bg-art-a');
+  const currentLayer = activeBgLayer === 'a'
+    ? document.querySelector('.bg-art-a')
+    : document.querySelector('.bg-art-b');
+
+  if(imageUrl){
+    nextLayer.style.backgroundImage = `url("${imageUrl}")`;
+  } else {
+    nextLayer.style.backgroundImage = getFallbackBackground();
+  }
+
+  nextLayer.classList.add('active');
+  currentLayer.classList.remove('active');
+  activeBgLayer = activeBgLayer === 'a' ? 'b' : 'a';
+
+  // 모바일용: player-bar::after 배경 업데이트
+  if(window.innerWidth <= 640){
+    if(imageUrl){
+      document.documentElement.style.setProperty('--mobile-player-bg', `url("${imageUrl}")`);
+    } else {
+      document.documentElement.style.setProperty('--mobile-player-bg', getFallbackBackground());
+    }
+  }
+}
+/* ========================================================= */
+
 function getPort(id){return 10000+id*10}
 function fakeFreq(id){
   const idx=channels.findIndex(c=>c.id===id);
   return (87.5+(108-87.5)/channels.length*idx).toFixed(1)+' FM';
 }
 
-/* ── 마퀴 스크롤 설정 ───────────────────────── */
+/* 마퀴 스크롤 */
 function applyMarquee(marqueeEl, innerEl, textEl){
   marqueeEl.classList.remove('scrolling','short');
   innerEl.style.animation='';
@@ -657,9 +740,7 @@ function toggleMute(){
 audio.volume=1.00;
 buildTicker();buildFilters();buildGrid();
 
-/* =============================================
-   NOW PLAYING (원본 그대로)
-   ============================================= */
+/* NOW PLAYING */
 let npTimer=null;
 let lastTrackStr='';
 let currentArtUrl=null;
@@ -745,6 +826,9 @@ function updateNowPlayingUI(artist, title, artUrl, loading=false){
   setMarqueeText('artistMarquee','artistInner','npArtist', artist||'');
 
   if(artUrl !== undefined){
+    // 몰입형 배경 업데이트 (crossfade)
+    setImmersiveBackground(artUrl || null);
+
     albumEl.innerHTML='';
     if(artUrl){
       const img=new Image();
@@ -794,6 +878,8 @@ function stopNowPlaying(){
   setMarqueeText('artistMarquee','artistInner','npArtist','');
   document.getElementById('nowPlayingAlbum').innerHTML='<div class="album-placeholder">🎵</div>';
   lastTrackStr='';currentArtUrl=null;
+  // fallback 배경 초기화 (앨범아트 없을 때 그라디언트 유지)
+  setImmersiveBackground(null);
 }
 
 if('serviceWorker' in navigator){
@@ -812,122 +898,6 @@ function adjustBodyPadding(){
 const resizeObserver = new ResizeObserver(adjustBodyPadding);
 resizeObserver.observe(document.getElementById('playerBar'));
 window.addEventListener('resize', adjustBodyPadding);
-
-// ========== 추가 기능: 배경 앨범아트 + 크로스페이드 (기존 코드 수정 없음) ==========
-(function setupArtworkBackground() {
-  const bg1 = document.getElementById('bgLayer1');
-  const bg2 = document.getElementById('bgLayer2');
-  let activeLayer = 1; // 1 or 2
-  let pendingImageUrl = null;
-  let isTransitioning = false;
-  
-  // fallback 배경 적용
-  function setFallbackBackground(targetLayer) {
-    targetLayer.classList.add('fallback');
-    targetLayer.style.backgroundImage = ''; // clear url
-  }
-  
-  function clearFallback(targetLayer) {
-    targetLayer.classList.remove('fallback');
-  }
-  
-  // 실제 배경 이미지 업데이트 (크로스페이드)
-  function updateBackgroundWithFade(artUrl) {
-    if (isTransitioning) return;
-    
-    const nextLayer = (activeLayer === 1) ? bg2 : bg1;
-    const prevLayer = (activeLayer === 1) ? bg1 : bg2;
-    
-    // 새 레이어에 이미지 설정 또는 fallback
-    if (artUrl && artUrl.trim() !== '') {
-      clearFallback(nextLayer);
-      // preload image
-      const imgTest = new Image();
-      imgTest.crossOrigin = 'Anonymous';
-      imgTest.onload = () => {
-        nextLayer.style.backgroundImage = `url('${artUrl}')`;
-        nextLayer.style.opacity = '1';
-        prevLayer.style.opacity = '0';
-        activeLayer = (activeLayer === 1) ? 2 : 1;
-        isTransitioning = false;
-      };
-      imgTest.onerror = () => {
-        // 로드 실패시 fallback
-        setFallbackBackground(nextLayer);
-        nextLayer.style.opacity = '1';
-        prevLayer.style.opacity = '0';
-        activeLayer = (activeLayer === 1) ? 2 : 1;
-        isTransitioning = false;
-      };
-      imgTest.src = artUrl;
-    } else {
-      // artUrl 없으면 fallback 그라데이션
-      setFallbackBackground(nextLayer);
-      nextLayer.style.opacity = '1';
-      prevLayer.style.opacity = '0';
-      activeLayer = (activeLayer === 1) ? 2 : 1;
-      isTransitioning = false;
-    }
-    isTransitioning = true;
-    // 타임아웃 방어
-    setTimeout(() => { if(isTransitioning) isTransitioning = false; }, 800);
-  }
-  
-  // 원본 updateNowPlayingUI 가로채기 (함수 덮어쓰기, 기존 함수 보존)
-  const originalUpdateNowPlayingUI = window.updateNowPlayingUI;
-  window.updateNowPlayingUI = function(artist, title, artUrl, loading) {
-    // 원본 호출
-    originalUpdateNowPlayingUI(artist, title, artUrl, loading);
-    
-    // 로딩 중이 아니고, artUrl이 정의된 경우에 배경 업데이트
-    if (!loading && artUrl !== undefined) {
-      if (artUrl && typeof artUrl === 'string' && artUrl.startsWith('http')) {
-        updateBackgroundWithFade(artUrl);
-      } else if (!artUrl) {
-        // 앨범아트 없는 경우 (클래식, 연주곡 등) fallback 배경 적용
-        updateBackgroundWithFade(null);
-      }
-    }
-    // 만약 loading 중이고 이전 배경을 유지하고 싶다면 아무것도 안함 (기존 배경 유지)
-  };
-  
-  // stopNowPlaying 오버라이드 (배경 리셋)
-  const originalStopNowPlaying = window.stopNowPlaying;
-  window.stopNowPlaying = function() {
-    originalStopNowPlaying();
-    // fallback 배경으로 리셋 (두 레이어 모두 스타일 조정, 하지만 fade는 최소화)
-    const fallbackUrl = null;
-    if (activeLayer === 1) {
-      setFallbackBackground(bg1);
-      bg1.style.opacity = '1';
-      bg2.style.opacity = '0';
-      bg2.style.backgroundImage = '';
-    } else {
-      setFallbackBackground(bg2);
-      bg2.style.opacity = '1';
-      bg1.style.opacity = '0';
-      bg1.style.backgroundImage = '';
-    }
-    activeLayer = (activeLayer === 1) ? 1 : 2;
-    isTransitioning = false;
-  };
-  
-  // startNowPlaying 오버라이드: 로딩 중에도 배경 유지 위해 fallback 유지 또는 이전 배경 잔류
-  const originalStartNowPlaying = window.startNowPlaying;
-  window.startNowPlaying = function() {
-    originalStartNowPlaying();
-    // 로딩 상태에서는 배경을 건드리지 않음 (마지막 유효 배경 or fallback)
-  };
-  
-  // 초기 fallback 적용
-  setFallbackBackground(bg1);
-  bg1.style.opacity = '1';
-  bg2.style.opacity = '0';
-  activeLayer = 1;
-  isTransitioning = false;
-  
-  // 재생 중이 아닐 때 기본 fallback 표시 유지
-})();
 </script>
 </body>
 </html>
