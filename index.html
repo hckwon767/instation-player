@@ -749,6 +749,49 @@ const audio=document.getElementById('audioEl');
 let activeId=null,isMuted=false;
 const isMobile=()=>window.innerWidth<=640;
 
+/* ── 자동 채널 스킵 설정 ── */
+const AUTO_SKIP_SEC=60;          // 재생 없을 시 다음 채널로 넘어가는 대기 시간 (초)
+let autoSkipTimer=null;
+
+/* ── ON AIR 상태 제어 ── */
+function setOnAir(active){
+  document.querySelectorAll('.on-air,.mob-on-air,.mp-on-air').forEach(el=>el.classList.toggle('active',active));
+  document.querySelectorAll('.signal-bars').forEach(el=>el.classList.toggle('active',active));
+  document.getElementById('tabPlayingDot').classList.toggle('visible',active);
+}
+
+/* ── 자동 채널 스킵 ── */
+function startAutoSkipTimer(){
+  clearAutoSkipTimer();
+  autoSkipTimer=setTimeout(()=>{
+    if(activeId) playNextChannel();
+  }, AUTO_SKIP_SEC*1000);
+}
+function clearAutoSkipTimer(){
+  if(autoSkipTimer){clearTimeout(autoSkipTimer);autoSkipTimer=null}
+}
+
+/* ── 오디오 이벤트 바인딩 ── */
+audio.addEventListener('playing',()=>{
+  setOnAir(true);
+  clearAutoSkipTimer();      // 실제 재생 시작 → 타이머 해제
+});
+audio.addEventListener('waiting',()=>{
+  setOnAir(false);           // 버퍼링 중 → ON AIR 끔
+});
+audio.addEventListener('pause',()=>{
+  setOnAir(false);
+  clearAutoSkipTimer();
+});
+audio.addEventListener('error',()=>{
+  setOnAir(false);
+  startAutoSkipTimer();      // 오류 시 즉시 스킵 타이머 시작
+});
+audio.addEventListener('stalled',()=>{
+  setOnAir(false);
+  startAutoSkipTimer();
+});
+
 function getPort(id){return 10000+id*10}
 function fakeFreq(id){
   const idx=channels.findIndex(c=>c.id===id);
@@ -963,17 +1006,15 @@ function playChannel(ch,card){
   mpAlbum.classList.remove('has-art');
 
   setPlayIcon(true);
-  document.querySelectorAll('.on-air,.mob-on-air,.mp-on-air').forEach(el=>el.classList.add('active'));
-  document.querySelectorAll('.signal-bars').forEach(el=>el.classList.add('active'));
-  document.getElementById('tabPlayingDot').classList.add('visible');
-
+  setOnAir(false);           // playing 이벤트 전까지 OFF
+  startAutoSkipTimer();      // 60초 내 playing 없으면 다음 채널
   setImmersiveBg(null);
   startNowPlaying();
 }
 
 function togglePlay(){
   if(!activeId)return;
-  if(audio.paused){audio.play().catch(()=>{});setPlayIcon(true);startNowPlaying()}
+  if(audio.paused){audio.play().catch(()=>{});setPlayIcon(true);startNowPlaying();startAutoSkipTimer()}
   else{audio.pause();setPlayIcon(false);stopNowPlaying()}
 }
 
@@ -1135,6 +1176,8 @@ function startNowPlaying(){
 }
 function stopNowPlaying(){
   if(npTimer){clearInterval(npTimer);npTimer=null}
+  clearAutoSkipTimer();
+  setOnAir(false);
   const ph='<div class="album-placeholder">🎵</div>';
   ['dpAlbum','mpAlbum'].forEach(id=>{
     const el=document.getElementById(id);
