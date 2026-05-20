@@ -117,7 +117,7 @@ body::before{
 .ticker-item::before{content:'◆  ';color:var(--gold)}
 @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
-/* FILTER — 가로 스크롤, 줄바꿈 없음 */
+/* FILTER */
 .filter-wrap{
   max-width:1200px;margin:0 auto;
   padding:16px 20px 0;
@@ -128,14 +128,9 @@ body::before{
 .filter-section{display:flex;gap:7px;flex-wrap:nowrap;width:max-content}
 .filter-btn{
   font-family:var(--mono);font-size:10px;letter-spacing:0.12em;
-  padding:0 14px;
-  min-height:36px;
-  display:flex;align-items:center;
-  background:transparent;
-  border:1px solid var(--border);
-  color:var(--text-muted);
-  border-radius:2px;cursor:pointer;
-  transition:all 0.2s;white-space:nowrap;
+  padding:0 14px;min-height:36px;display:flex;align-items:center;
+  background:transparent;border:1px solid var(--border);color:var(--text-muted);
+  border-radius:2px;cursor:pointer;transition:all 0.2s;white-space:nowrap;
 }
 @media(hover:hover){.filter-btn:hover{border-color:var(--gold2);color:var(--gold)}}
 .filter-btn.active{background:var(--gold);color:#000;border-color:var(--gold);font-weight:700}
@@ -203,14 +198,14 @@ body::before{
 @keyframes eq-anim{from{transform:scaleY(0.3)}to{transform:scaleY(1)}}
 .ch-card.hidden-card{display:none}
 
-/* ========= 플레이어 바 (기본/데스크톱 = 가로 1열) ========= */
+/* ========= 플레이어 바 ========= */
 .player-bar{
   position:fixed;bottom:0;left:0;right:0;
   background:rgba(8,8,12,0.98);
   border-top:1px solid var(--border-bright);
   backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
   display:none;z-index:1000;
-  height:auto;                     /* 높이 자동 조절 */
+  height:auto;
   padding-bottom:var(--safe-b);
 }
 .player-bar::before{
@@ -222,47 +217,14 @@ body::before{
 .player-inner{
   max-width:1200px;margin:0 auto;
   padding:10px 20px;
-  display:flex;
-  flex-direction:row;
-  align-items:center;
-  gap:14px;
+  display:flex;flex-direction:row;align-items:center;gap:14px;
 }
-
-/* 플레이어 상단/하단 그룹 (데스크톱에서는 가로 배치를 위해) */
 .player-top{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  flex:1;
-  min-width:0;
+  display:flex;align-items:center;gap:14px;
+  flex:1;min-width:0;
 }
 .player-bottom{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  flex-shrink:0;
-}
-
-/* 썸네일 + 정보 스타일 */
-.player-thumb-wrap{
-  width:46px;height:46px;border-radius:2px;
-  border:1px solid var(--border-bright);overflow:hidden;
-  flex-shrink:0;background:var(--surface2);
-  display:flex;align-items:center;justify-content:center;font-size:18px;
-}
-.player-thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block}
-.player-info{
-  flex:1;
-  min-width:0;
-}
-.player-ch-name{
-  font-size:13px;font-weight:600;color:var(--text);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;
-}
-.player-ch-tag{
-  font-family:var(--mono);font-size:9px;
-  letter-spacing:0.15em;color:var(--gold);margin-top:2px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:flex;align-items:center;gap:14px;flex-shrink:0;
 }
 .player-freq{
   font-family:var(--mono);font-size:18px;font-weight:700;
@@ -280,7 +242,6 @@ body::before{
 @media(hover:hover){.play-btn:hover{background:var(--gold);color:#000}}
 .play-btn:active{background:var(--gold);color:#000}
 .play-btn svg{width:18px;height:18px}
-
 .vol-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0;min-width:110px}
 .vol-icon{
   background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;
@@ -305,44 +266,66 @@ body::before{
 }
 audio{display:none}
 
-/* ── 앨범아트 (메인 썸네일) ── */
+/* ── 앨범아트 ── */
 .now-playing-album{
   width:144px;height:144px;
-  border-radius:4px;
-  flex-shrink:0;overflow:hidden;
-  background:var(--surface2);
-  border:1px solid var(--border-bright);
-  display:flex;align-items:center;justify-content:center;
-  font-size:24px;
+  border-radius:4px;flex-shrink:0;overflow:hidden;
+  background:var(--surface2);border:1px solid var(--border-bright);
+  display:flex;align-items:center;justify-content:center;font-size:24px;
   transition:box-shadow 0.3s;
 }
 .now-playing-album img{width:100%;height:100%;object-fit:cover;display:block}
 .now-playing-album .album-placeholder{
   width:100%;height:100%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:26px;
-}
-.ch-card.active ~ * .now-playing-album,
-.now-playing-album:not(:empty){
-  box-shadow:0 0 16px rgba(245,183,64,0.15);
+  display:flex;align-items:center;justify-content:center;font-size:26px;
 }
 
-/* ── 곡 정보 텍스트 ── */
-.now-playing-track{flex:1;min-width:0}
+/* ── 곡 정보 텍스트 + 마퀴 스크롤 ── */
+.now-playing-track{flex:1;min-width:0;overflow:hidden}
+
 .np-ch-tag{
   font-family:var(--mono);font-size:13px;letter-spacing:0.2em;
   color:var(--gold);margin-bottom:4px;opacity:0.85;
   text-transform:uppercase;
-}
-.np-title{
-  font-size:30px;font-weight:600;color:var(--text);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;
-}
-.np-artist{
-  font-size:23px;color:var(--text-muted);
+  /* 태그는 짧으므로 그냥 ellipsis */
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  margin-top:2px;
 }
+
+/* 마퀴 컨테이너: 넘칠 때만 스크롤 */
+.np-marquee{
+  overflow:hidden;
+  position:relative;
+  /* 양끝 페이드 */
+  -webkit-mask-image:linear-gradient(to right, transparent 0%, black 4%, black 92%, transparent 100%);
+  mask-image:linear-gradient(to right, transparent 0%, black 4%, black 92%, transparent 100%);
+}
+.np-marquee.short{
+  /* 짧은 텍스트는 마스크·스크롤 없이 */
+  -webkit-mask-image:none;
+  mask-image:none;
+}
+.np-marquee-inner{
+  display:inline-block;
+  white-space:nowrap;
+  /* 스크롤 필요할 때 JS가 animation 추가 */
+}
+.np-marquee.scrolling .np-marquee-inner{
+  animation:marquee-scroll var(--marquee-dur, 12s) linear infinite;
+}
+@keyframes marquee-scroll{
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(var(--marquee-dist, -50%)); }
+}
+
+.np-title-text{
+  font-size:30px;font-weight:600;color:var(--text);
+  line-height:1.35;
+}
+.np-artist-text{
+  font-size:23px;color:var(--text-muted);
+  line-height:1.35;margin-top:2px;
+}
+
 .np-loading{
   font-family:var(--mono);font-size:9px;color:var(--text-dim);
   animation:np-blink 1.2s ease-in-out infinite;
@@ -351,70 +334,30 @@ audio{display:none}
 .np-spin{display:inline-block;animation:np-rotate 1s linear infinite;}
 @keyframes np-rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-/* ========= 모바일 전용 ========= */
+/* ========= 모바일 ========= */
 @media (max-width: 640px) {
-  body {
-    padding-bottom: calc(100px + var(--safe-b) + 16px);
-  }
-  .player-bar {
-    min-height: calc(92px + var(--safe-b));
-  }
-  .player-inner {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 10px 16px;
-    gap: 10px;
-  }
-  .player-top {
-    width: 100%;
-    flex: none;
-    gap: 12px;
-  }
-  /* 앨범아트 모바일 크기 */
-  .now-playing-album {
-    width: 128px;
-    height: 128px;
-  }
-  .np-title { font-size: 30px; }
-  .np-artist { font-size: 23px; }
-  .player-bottom {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-  }
-  .player-freq {
-    font-size: 18px;
-    min-width: auto;
-    text-align: left;
-    flex: 1;
-  }
-  .play-btn { width: 52px; height: 52px; flex-shrink: 0; }
-  .vol-wrap { flex: 1.2; min-width: 100px; gap: 8px; }
-  .vol-slider { min-width: 70px; }
+  body { padding-bottom: calc(100px + var(--safe-b) + 16px); }
+  .player-bar { min-height: calc(92px + var(--safe-b)); }
+  .player-inner { flex-direction:column;align-items:stretch;padding:10px 16px;gap:10px; }
+  .player-top { width:100%;flex:none;gap:12px; }
+  .now-playing-album { width:128px;height:128px; }
+  .np-title-text { font-size:30px; }
+  .np-artist-text { font-size:23px; }
+  .player-bottom { width:100%;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:10px; }
+  .player-freq { font-size:18px;min-width:auto;text-align:left;flex:1; }
+  .play-btn { width:52px;height:52px;flex-shrink:0; }
+  .vol-wrap { flex:1.2;min-width:100px;gap:8px; }
+  .vol-slider { min-width:70px; }
 }
 
-/* 중간 사이즈 태블릿 대응 (선택) */
-@media (min-width: 641px) and (max-width: 900px) {
-  .player-freq {
-    font-size: 16px;
-    min-width: 70px;
-  }
-  .vol-wrap {
-    min-width: 100px;
-  }
+@media (min-width:641px) and (max-width:900px) {
+  .player-freq { font-size:16px;min-width:70px; }
+  .vol-wrap { min-width:100px; }
 }
 
-/* 앱으로 실행될 때(설치 후)만 적용 */
-@media all and (display-mode: standalone) {
-  .install-banner {
-    display: none;  /* 설치 안내 배너를 숨김 */
-  }
-  body {
-    padding-top: env(safe-area-inset-top); /* 상단 노치 영역 대비 */
-  }
+@media all and (display-mode:standalone) {
+  .install-banner { display:none; }
+  body { padding-top:env(safe-area-inset-top); }
 }
 </style>
 </head>
@@ -448,18 +391,26 @@ audio{display:none}
 
 <div class="player-bar" id="playerBar">
   <div class="player-inner">
-    <!-- 앨범아트 + 곡정보 -->
     <div class="player-top">
       <div class="now-playing-album" id="nowPlayingAlbum">
         <div class="album-placeholder">🎵</div>
       </div>
-      <div class="now-playing-track">
+      <div class="now-playing-track" id="nowPlayingTrack">
         <div class="np-ch-tag" id="playerTag">INSTATION</div>
-        <div class="np-title" id="npTitle">–</div>
-        <div class="np-artist" id="npArtist"></div>
+        <!-- 곡명 마퀴 -->
+        <div class="np-marquee" id="titleMarquee">
+          <div class="np-marquee-inner" id="titleInner">
+            <span class="np-title-text" id="npTitle">–</span>
+          </div>
+        </div>
+        <!-- 아티스트 마퀴 -->
+        <div class="np-marquee" id="artistMarquee">
+          <div class="np-marquee-inner" id="artistInner">
+            <span class="np-artist-text" id="npArtist"></span>
+          </div>
+        </div>
       </div>
     </div>
-    <!-- 컨트롤: 주파수, 재생버튼, 볼륨 -->
     <div class="player-bottom">
       <div class="player-freq" id="playerFreq">–</div>
       <button class="play-btn" id="playBtn" onclick="togglePlay()" aria-label="재생/일시정지">
@@ -479,7 +430,6 @@ audio{display:none}
 <audio id="audioEl"></audio>
 
 <script>
-/* 우클릭·드래그·선택 방지 */
 document.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('dragstart',e=>e.preventDefault());
 document.addEventListener('selectstart',e=>e.preventDefault());
@@ -500,7 +450,7 @@ const channels=[
   {id:14,  img:'ori_img16',  name:'정통 재즈',              tag:'재즈',    cat:'재즈'},
   {id:206, img:'ori_img21',  name:'여름노래',               tag:'음악방송',cat:'음악방송'},
   {id:207, img:'ori_img22',  name:'가을 감성',              tag:'음악방송',cat:'음악방송'},
-  {id:209, img:'ori_img23',  name:'겨울 포근한 노래',       tag:'음악방송',cat:'음악방송'},
+  {id:209, img:'ori_img23',  name:'겨울 포근한 음악',       tag:'음악방송',cat:'음악방송'},
   {id:211, img:'ori_img119', name:'산뜻한 연주',            tag:'연주',    cat:'연주'},
   {id:212, img:'ori_img120', name:'커피와 재즈',            tag:'재즈',    cat:'재즈'},
   {id:213, img:'ori_img121', name:'편안한 독서 & 집중',     tag:'음악방송',cat:'음악방송'},
@@ -519,6 +469,54 @@ function getPort(id){return 10000+id*10}
 function fakeFreq(id){
   const idx=channels.findIndex(c=>c.id===id);
   return (87.5+(108-87.5)/channels.length*idx).toFixed(1)+' FM';
+}
+
+/* ── 마퀴 스크롤 설정 ─────────────────────────
+   텍스트 너비 > 컨테이너 너비일 때만 스크롤 시작.
+   텍스트를 복제해 이어붙여 seamless 루프 구현.
+*/
+function applyMarquee(marqueeEl, innerEl, textEl){
+  // 기존 animation/복제 초기화
+  marqueeEl.classList.remove('scrolling','short');
+  innerEl.style.animation='';
+  // 복제 span 제거
+  const clone = innerEl.querySelector('.np-marquee-clone');
+  if(clone) clone.remove();
+
+  // 한 프레임 뒤에 너비 측정 (렌더링 반영)
+  requestAnimationFrame(()=>{
+    const containerW = marqueeEl.offsetWidth;
+    const textW      = textEl.offsetWidth;
+
+    if(textW <= containerW){
+      // 짧음 — 그냥 표시
+      marqueeEl.classList.add('short');
+      return;
+    }
+
+    // 복제본 추가 (gap 포함)
+    const gap = 80; // px
+    const cloneSpan = textEl.cloneNode(true);
+    cloneSpan.classList.add('np-marquee-clone');
+    cloneSpan.style.paddingLeft = gap + 'px';
+    innerEl.appendChild(cloneSpan);
+
+    const totalW  = textW + gap;
+    const speed   = 60; // px/s
+    const dur     = totalW / speed;
+
+    innerEl.style.setProperty('--marquee-dist', `-${totalW}px`);
+    innerEl.style.setProperty('--marquee-dur',  `${dur}s`);
+    marqueeEl.classList.add('scrolling');
+  });
+}
+
+function setMarqueeText(marqueeId, innerId, spanId, text){
+  const marqueeEl = document.getElementById(marqueeId);
+  const innerEl   = document.getElementById(innerId);
+  const spanEl    = document.getElementById(spanId);
+  spanEl.textContent = text;
+  applyMarquee(marqueeEl, innerEl, spanEl);
 }
 
 function buildTicker(){
@@ -588,9 +586,9 @@ function playChannel(ch,card,imgSrc){
   document.getElementById('playerBar').classList.add('visible');
   document.getElementById('playerTag').textContent=ch.tag.toUpperCase();
   document.getElementById('playerFreq').textContent=fakeFreq(ch.id);
-  // 채널 전환 시 곡정보 초기화
-  document.getElementById('npTitle').textContent='–';
-  document.getElementById('npArtist').textContent='';
+  // 초기화
+  setMarqueeText('titleMarquee','titleInner','npTitle','–');
+  setMarqueeText('artistMarquee','artistInner','npArtist','');
   document.getElementById('nowPlayingAlbum').innerHTML='<div class="album-placeholder">🎵</div>';
   setPlayIcon(true);
   document.getElementById('onAir').classList.add('active');
@@ -632,69 +630,39 @@ buildTicker();buildFilters();buildGrid();
 
 /* =============================================
    NOW PLAYING
-   1단계: live01.inlive.co.kr/stats.html?port=XXXX  (Shoutcast HTML, CORS 시도)
-   2단계: scjsinfo 프록시 (same-origin이라 실패할 수 있음, 시도는 해봄)
-   3단계: iTunes Search API로 앨범아트
    ============================================= */
 let npTimer=null;
 let lastTrackStr='';
 let currentArtUrl=null;
 
-/* ── 1. stats.html 직접 파싱 ──────────────────
-   Shoutcast stats.html 형식:
-   <html><body>
-   listeners,maxlisteners,unique,bitrate,songtitle
-   </body></html>
-   또는 JSON 응답일 수도 있음
-*/
 async function fetchStatsMeta(port){
   const url=`https://live01.inlive.co.kr/stats.html?port=${port}`;
   try{
-    const res=await fetch(url,{
-      cache:'no-store',
-      headers:{'Accept':'text/html,application/json,*/*'}
-    });
+    const res=await fetch(url,{cache:'no-store',headers:{'Accept':'text/html,application/json,*/*'}});
     if(!res.ok) return null;
     const ct=res.headers.get('content-type')||'';
-
-    // JSON 응답인 경우
     if(ct.includes('json')){
       const data=await res.json();
-      // 가능한 필드들 시도
       const title=data.title||data.currenttitle||data.current_song||data.songtitle||'';
       const artist=data.artist||data.currentartist||'';
       if(title||artist) return parseArtistTitle(artist,title);
       return null;
     }
-
-    // HTML/text 응답
-    const text=await res.text();
-    return parseStatsHtml(text);
+    return parseStatsHtml(await res.text());
   }catch(e){
-    console.debug('[NP] stats.html fetch 실패 (CORS?):', e.message);
+    console.debug('[NP] stats.html fetch 실패:', e.message);
     return null;
   }
 }
 
-/* stats.html HTML 파싱 — 여러 포맷 대응 */
 function parseStatsHtml(html){
-  // 태그 제거 후 콤마 분리 형식: listeners,max,unique,connected,bitrate,SongTitle
   const plain=html.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
-
-  // "ARTIST - TITLE" 패턴 직접 추출 시도 (Shoutcast 공통 패턴)
   const parts=plain.split(',');
-  if(parts.length>=6){
-    const song=parts.slice(5).join(',').trim();
-    return parseArtistTitle('',song);
-  }
-  // 콤마 없이 통째로 들어오는 경우
-  if(plain.length>1 && plain.length<300){
-    return parseArtistTitle('',plain);
-  }
+  if(parts.length>=6) return parseArtistTitle('',parts.slice(5).join(',').trim());
+  if(plain.length>1 && plain.length<300) return parseArtistTitle('',plain);
   return null;
 }
 
-/* "Artist - Title" 문자열 분리 */
 function parseArtistTitle(artist,raw){
   raw=(raw||'').trim();
   if(!raw && !artist) return null;
@@ -705,13 +673,8 @@ function parseArtistTitle(artist,raw){
   return {artist:(artist||'').trim(), title:raw};
 }
 
-/* ── 2. 공개 CORS 프록시 경유 stats.html ──────
-   정적 호스팅이면 서버 프록시 불가, 공개 프록시로 시도
-   (rate limit 있으므로 1단계 실패시만 사용)
-*/
 async function fetchStatsMetaViaProxy(port){
   const target=encodeURIComponent(`https://live01.inlive.co.kr/stats.html?port=${port}`);
-  // allorigins: 무료, rate limit 있음
   const proxy=`https://api.allorigins.win/get?url=${target}`;
   try{
     const res=await fetch(proxy,{cache:'no-store'});
@@ -725,12 +688,8 @@ async function fetchStatsMetaViaProxy(port){
   }
 }
 
-/* ── 3. iTunes Search API — 앨범아트 ──────────
-   CORS 완전 허용, 무료, 한국곡도 잘 잡힘
-*/
 async function fetchAlbumArt(artist,title){
   try{
-    // 한국어 포함 시 title만, 영문은 artist+title
     const q=encodeURIComponent((artist?`${artist} `:'')+title);
     const res=await fetch(
       `https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=3`,
@@ -739,100 +698,78 @@ async function fetchAlbumArt(artist,title){
     if(!res.ok) return null;
     const data=await res.json();
     if(!data.results?.length) return null;
-    // 가장 첫 번째 결과 (관련성 높은 순)
-    const art=data.results[0].artworkUrl100;
-    // 100x100 → 600x600
-    return art.replace('100x100bb','600x600bb');
+    return data.results[0].artworkUrl100.replace('100x100bb','600x600bb');
   }catch(e){return null;}
 }
 
-/* ── UI 업데이트 ─────────────────────────────── */
 function updateNowPlayingUI(artist, title, artUrl, loading=false){
   const albumEl = document.getElementById('nowPlayingAlbum');
-  const titleEl = document.getElementById('npTitle');
-  const artistEl= document.getElementById('npArtist');
 
   if(loading){
     albumEl.innerHTML='<div class="album-placeholder"><span class="np-spin">⟳</span></div>';
-    titleEl.innerHTML='<span class="np-loading">불러오는 중...</span>';
-    artistEl.textContent='';
+    setMarqueeText('titleMarquee','titleInner','npTitle','불러오는 중...');
+    setMarqueeText('artistMarquee','artistInner','npArtist','');
     return;
   }
 
-  titleEl.textContent = title || '–';
-  artistEl.textContent = artist || '';
+  setMarqueeText('titleMarquee','titleInner','npTitle', title||'–');
+  setMarqueeText('artistMarquee','artistInner','npArtist', artist||'');
 
-  // artUrl === undefined → 앨범아트 유지, null → 플레이스홀더, string → 이미지
   if(artUrl !== undefined){
     albumEl.innerHTML='';
     if(artUrl){
-      const img = new Image();
-      img.alt = title;
+      const img=new Image();
+      img.alt=title;
       img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';
-      img.onload = ()=>{ albumEl.innerHTML=''; albumEl.appendChild(img); };
-      img.onerror= ()=>{ albumEl.innerHTML='<div class="album-placeholder">🎵</div>'; };
-      img.src = artUrl;
-      currentArtUrl = artUrl;
-    } else {
+      img.onload=()=>{albumEl.innerHTML='';albumEl.appendChild(img);};
+      img.onerror=()=>{albumEl.innerHTML='<div class="album-placeholder">🎵</div>';};
+      img.src=artUrl;
+      currentArtUrl=artUrl;
+    }else{
       albumEl.innerHTML='<div class="album-placeholder">🎵</div>';
-      currentArtUrl = null;
+      currentArtUrl=null;
     }
   }
 }
 
-/* ── 폴링 메인 ───────────────────────────────── */
 async function pollNowPlaying(){
   if(!activeId) return;
   const port=getPort(activeId);
-
-  // 1차: 직접 fetch (CORS 허용이면 성공)
   let meta=await fetchStatsMeta(port);
-
-  // 2차: allorigins 프록시 경유
   if(!meta) meta=await fetchStatsMetaViaProxy(port);
-
-  if(!meta){
-    // 메타 못 가져오면 로딩 중 유지 (첫 시도) 또는 무음 유지
-    return;
-  }
+  if(!meta) return;
 
   const trackStr=`${meta.artist}||${meta.title}`;
-  if(trackStr===lastTrackStr) return; // 곡 변경 없음
+  if(trackStr===lastTrackStr) return;
   lastTrackStr=trackStr;
 
-  // 곡명 즉시 표시 (앨범아트는 undefined → 기존 유지)
   updateNowPlayingUI(meta.artist, meta.title, undefined);
 
-  // iTunes 앨범아트 비동기
   const art=await fetchAlbumArt(meta.artist, meta.title);
-  // 여전히 같은 곡이면 아트 업데이트
   if(lastTrackStr===`${meta.artist}||${meta.title}`){
     updateNowPlayingUI(meta.artist, meta.title, art||null);
   }
 }
 
 function startNowPlaying(){
-  lastTrackStr='';
-  currentArtUrl=null;
+  lastTrackStr='';currentArtUrl=null;
   if(npTimer) clearInterval(npTimer);
-  updateNowPlayingUI('','','',true); // 로딩 표시
+  updateNowPlayingUI('','','',true);
   pollNowPlaying();
-  npTimer=setInterval(pollNowPlaying, 12000); // 12초마다
+  npTimer=setInterval(pollNowPlaying,12000);
 }
 
 function stopNowPlaying(){
   if(npTimer){clearInterval(npTimer);npTimer=null;}
-  document.getElementById('npTitle').textContent='–';
-  document.getElementById('npArtist').textContent='';
+  setMarqueeText('titleMarquee','titleInner','npTitle','–');
+  setMarqueeText('artistMarquee','artistInner','npArtist','');
   document.getElementById('nowPlayingAlbum').innerHTML='<div class="album-placeholder">🎵</div>';
-  lastTrackStr='';
-  currentArtUrl=null;
+  lastTrackStr='';currentArtUrl=null;
 }
 
-// 오류 수정 (작은따옴표 중복 제거)
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js', { scope: './' })
+    navigator.serviceWorker.register('./sw.js',{scope:'./'})
       .catch(err=>console.warn('SW 등록 실패:',err));
   });
 }
