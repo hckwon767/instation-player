@@ -761,10 +761,14 @@ function setOnAir(active){
 }
 
 /* ── 자동 채널 스킵 ── */
+let isSkipping=false;
 function startAutoSkipTimer(){
   clearAutoSkipTimer();
   autoSkipTimer=setTimeout(()=>{
-    if(activeId) playNextChannel();
+    isSkipping=true;
+    playNextChannel();
+    // 새 채널에서도 playing 없으면 다시 타이머 걸어야 하므로
+    // isSkipping은 playChannel 내 startAutoSkipTimer 호출 후 해제
   }, AUTO_SKIP_SEC*1000);
 }
 function clearAutoSkipTimer(){
@@ -773,12 +777,12 @@ function clearAutoSkipTimer(){
 
 /* ── 오디오 이벤트 바인딩 ── */
 audio.addEventListener('playing',()=>{
+  isSkipping=false;
   setOnAir(true);
-  clearAutoSkipTimer();      // 실제 재생 시작 → 타이머 해제
+  clearAutoSkipTimer();
 });
 audio.addEventListener('waiting',()=>{
-  setOnAir(false);           // 버퍼링 중 → ON AIR 끔
-  startAutoSkipTimer();      // 오류 시 즉시 스킵 타이머 시작
+  setOnAir(false);
 });
 audio.addEventListener('pause',()=>{
   setOnAir(false);
@@ -786,11 +790,11 @@ audio.addEventListener('pause',()=>{
 });
 audio.addEventListener('error',()=>{
   setOnAir(false);
-  startAutoSkipTimer();      // 오류 시 즉시 스킵 타이머 시작
+  if(!isSkipping) startAutoSkipTimer();  // 스킵 진행 중엔 무시
 });
 audio.addEventListener('stalled',()=>{
   setOnAir(false);
-  startAutoSkipTimer();
+  if(!isSkipping) startAutoSkipTimer();  // 스킵 진행 중엔 무시
 });
 
 function getPort(id){return 10000+id*10}
@@ -1007,8 +1011,9 @@ function playChannel(ch,card){
   mpAlbum.classList.remove('has-art');
 
   setPlayIcon(true);
-  setOnAir(false);           // playing 이벤트 전까지 OFF
+  setOnAir(false);
   startAutoSkipTimer();      // 60초 내 playing 없으면 다음 채널
+  isSkipping=false;          // 새 채널 진입 완료 — 이벤트 감지 재개
   setImmersiveBg(null);
   startNowPlaying();
 }
