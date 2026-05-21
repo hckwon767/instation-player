@@ -324,6 +324,91 @@ body::before{
 audio{display:none}
 
 /* =============================================
+   추가채널 패널
+   ============================================= */
+.extra-panel{
+  display:none;
+  max-width:1200px;margin:20px auto 0;padding:0 20px;
+  position:relative;z-index:10;
+}
+.extra-panel.active{display:block}
+.extra-tag-bar{
+  display:flex;gap:7px;flex-wrap:nowrap;
+  overflow-x:auto;scrollbar-width:none;
+  padding-bottom:12px;
+}
+.extra-tag-bar::-webkit-scrollbar{display:none}
+.extra-tag-btn{
+  font-family:var(--mono);font-size:10px;letter-spacing:0.12em;
+  padding:0 14px;min-height:32px;display:flex;align-items:center;
+  background:rgba(17,17,24,0.5);border:1px solid var(--border);color:var(--text-muted);
+  border-radius:2px;cursor:pointer;transition:all 0.2s;white-space:nowrap;
+  backdrop-filter:blur(8px);flex-shrink:0;
+}
+@media(hover:hover){.extra-tag-btn:hover{border-color:var(--accent);color:var(--accent)}}
+.extra-tag-btn.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+
+.extra-list{
+  display:flex;flex-direction:column;gap:2px;
+  max-height:calc(100vh - 340px);
+  overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+}
+.extra-list::-webkit-scrollbar{width:3px}
+.extra-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.extra-item{
+  display:flex;align-items:center;gap:14px;
+  padding:10px 14px;
+  border:1px solid transparent;border-radius:2px;
+  cursor:pointer;transition:background 0.12s,border-color 0.15s;
+  position:relative;
+}
+@media(hover:hover){.extra-item:hover{background:rgba(17,17,24,0.7);border-color:var(--border)}}
+.extra-item:active{background:rgba(17,17,24,0.7)}
+.extra-item.active{background:rgba(17,17,24,0.9);border-color:var(--accent)}
+.extra-item.active::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:2px;background:var(--accent);border-radius:2px 0 0 2px;
+}
+.ex-num{font-family:var(--mono);font-size:9px;color:var(--text-dim);width:28px;text-align:right;flex-shrink:0}
+.ex-info{flex:1;min-width:0}
+.ex-name{font-size:13px;font-weight:400;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+.extra-item.active .ex-name{color:var(--accent);font-weight:500}
+.ex-tag{font-family:var(--mono);font-size:9px;color:var(--text-muted);margin-top:2px;letter-spacing:0.1em;text-transform:uppercase}
+.ex-eq{
+  flex-shrink:0;display:flex;align-items:flex-end;gap:2px;height:14px;width:20px;
+}
+.ex-eq-bar{width:3px;background:var(--accent);border-radius:1px;animation:eq-anim 0.6s ease-in-out infinite alternate;transform-origin:bottom}
+.ex-eq-bar:nth-child(2){animation-delay:0.15s}
+.ex-eq-bar:nth-child(3){animation-delay:0.3s}
+.ex-eq.paused .ex-eq-bar{animation-play-state:paused}
+
+/* 모바일 추가채널 뷰 */
+#mobileExtra{
+  position:fixed;inset:0;
+  background:var(--bg);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding-bottom:calc(var(--tabbar-h) + var(--safe-b));
+  z-index:100;
+  display:none;
+}
+#mobileExtra.active{display:block}
+.mob-extra-header{
+  padding:calc(var(--safe-t) + 16px) 16px 14px;
+  display:flex;align-items:center;
+  position:sticky;top:0;
+  background:rgba(10,10,15,0.92);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  z-index:10;
+}
+.mob-extra-title{font-family:var(--mono);font-size:16px;font-weight:700;letter-spacing:0.15em;color:var(--accent)}
+.mob-extra-tag-wrap{padding:10px 16px 0;overflow-x:auto;scrollbar-width:none}
+.mob-extra-tag-wrap::-webkit-scrollbar{display:none}
+.mob-extra-tag-section{display:flex;gap:6px;flex-wrap:nowrap;width:max-content}
+.mob-extra-list{padding:8px 16px;display:flex;flex-direction:column;gap:2px}
+
+/* =============================================
    모바일 전용 구조
    ============================================= */
 #mobileView{display:none}
@@ -585,11 +670,20 @@ audio{display:none}
     </div>
   </header>
   <div class="ticker-wrap"><div class="ticker-inner" id="ticker"></div></div>
-  <div class="filter-wrap"><div class="filter-section" id="filterSection"></div></div>
-  <section class="grid-section">
+  <div class="filter-wrap" style="display:flex;align-items:center">
+    <div class="filter-section" id="filterSection"></div>
+    <button class="filter-btn" id="btnExtraTab" style="margin-left:10px;flex-shrink:0" onclick="toggleExtraPanel()">+ 추가채널</button>
+  </div>
+  <section class="grid-section" id="mainGridSection">
     <div class="section-label" id="gridLabel">ALL CHANNELS</div>
     <div class="channel-grid" id="channelGrid"></div>
   </section>
+  <!-- 추가채널 패널 -->
+  <div class="extra-panel" id="extraPanel">
+    <div class="section-label" style="margin-bottom:10px">EXTRA CHANNELS &mdash; <span id="extraCount">0</span> CH</div>
+    <div class="extra-tag-bar" id="extraTagBar"></div>
+    <div class="extra-list" id="extraList"></div>
+  </div>
 </div>
 
 <!-- 데스크탑 플레이어 바 -->
@@ -693,6 +787,15 @@ audio{display:none}
 
 </div><!-- /mobileView -->
 
+<!-- 모바일 추가채널 뷰 -->
+<div id="mobileExtra">
+  <div class="mob-extra-header">
+    <div class="mob-extra-title">+ 추가채널</div>
+  </div>
+  <div class="mob-extra-tag-wrap"><div class="mob-extra-tag-section" id="mobExtraTagSection"></div></div>
+  <div class="mob-extra-list" id="mobExtraList"></div>
+</div>
+
 <!-- 모바일 탭바 -->
 <div class="mobile-tabbar" id="mobileTabbar">
   <div class="tabbar-inner">
@@ -700,6 +803,11 @@ audio{display:none}
     <button class="tab-btn active" id="tabChannels" onclick="switchTab('channels')">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span class="tab-label">CHANNELS</span>
+    </button>
+    <!-- 추가채널 탭 -->
+    <button class="tab-btn" id="tabExtra" onclick="switchTab('extra')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-dasharray="2 3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span class="tab-label">EXTRA</span>
     </button>
     <!-- 플레이어 탭 -->
     <button class="tab-btn" id="tabPlayer" onclick="switchTab('player')">
@@ -806,10 +914,15 @@ function fakeFreq(id){
 /* ── 탭 전환 ── */
 function switchTab(tab){
   const isPlayer=tab==='player';
-  document.getElementById('tabChannels').classList.toggle('active',!isPlayer);
+  const isExtra=tab==='extra';
+  document.getElementById('tabChannels').classList.toggle('active',tab==='channels');
   document.getElementById('tabPlayer').classList.toggle('active',isPlayer);
-  document.getElementById('mobileChannels').style.display=isPlayer?'none':'block';
+  const tabExtra=document.getElementById('tabExtra');
+  if(tabExtra) tabExtra.classList.toggle('active',isExtra);
+  document.getElementById('mobileChannels').style.display=(tab==='channels')?'block':'none';
   document.getElementById('mobilePlayer').classList.toggle('active',isPlayer);
+  const me=document.getElementById('mobileExtra');
+  if(me) me.classList.toggle('active',isExtra);
 }
 
 /* ── 마퀴 ── */
@@ -964,6 +1077,13 @@ function buildGrid(){
 
 /* ── 플레이어 제어 ── */
 function playPrevChannel() {
+  if (activeExtraIdx !== null) {
+    const filtered = getExtraFiltered();
+    if (!filtered.length) return;
+    activeExtraIdx = (activeExtraIdx - 1 + filtered.length) % filtered.length;
+    playExtraChannel(filtered[activeExtraIdx]);
+    return;
+  }
   if (!activeId) return;
   let idx = channels.findIndex(c => c.id === activeId);
   if (idx === -1) return;
@@ -972,6 +1092,13 @@ function playPrevChannel() {
 }
 
 function playNextChannel() {
+  if (activeExtraIdx !== null) {
+    const filtered = getExtraFiltered();
+    if (!filtered.length) return;
+    activeExtraIdx = (activeExtraIdx + 1) % filtered.length;
+    playExtraChannel(filtered[activeExtraIdx]);
+    return;
+  }
   if (!activeId) return;
   let idx = channels.findIndex(c => c.id === activeId);
   if (idx === -1) return;
@@ -981,6 +1108,7 @@ function playNextChannel() {
 
 function playChannel(ch,card){
   if(activeId===ch.id){togglePlay();return}
+  activeExtraIdx=null; // extra 채널 상태 초기화
   activeId=ch.id;
   document.querySelectorAll('.ch-card').forEach(c=>c.classList.remove('active'));
   // Activate all cards matching this channel (desktop + mobile)
@@ -1084,6 +1212,162 @@ function toggleMute(){
 }
 
 audio.volume=1.0;
+
+/* =============================================
+   추가채널 로직
+   ============================================= */
+const EXTRA_JSON_URL='https://raw.githubusercontent.com/hckwon767/ins-play/refs/heads/main/channels.json';
+let extraChannels=[];
+let extraFiltered=[];
+let extraCurrentTag='ALL';
+let activeExtraIdx=null;  // index in extraFiltered when extra channel is playing
+
+function decodeHtmlEntities(str){
+  const d=document.createElement('div');d.innerHTML=str;return d.textContent||str;
+}
+
+function toListenUrl(streamUrl){
+  try{
+    const u=new URL(streamUrl);
+    return `https://${u.hostname}/listen.html?port=${u.port}`;
+  }catch(e){return streamUrl}
+}
+
+function getExtraFiltered(){
+  return extraCurrentTag==='ALL'?extraChannels:extraChannels.filter(c=>c.tag===extraCurrentTag);
+}
+
+async function loadExtraChannels(){
+  try{
+    const res=await fetch(EXTRA_JSON_URL);
+    const data=await res.json();
+    extraChannels=data.channels;
+    buildExtraTags();
+    renderExtraList('ALL');
+  }catch(e){console.error('[EXTRA]',e)}
+}
+
+function buildExtraTags(){
+  const tags=['ALL',...new Set(extraChannels.map(c=>c.tag))];
+  ['extraTagBar','mobExtraTagSection'].forEach(id=>{
+    const bar=document.getElementById(id);
+    if(!bar)return;
+    bar.innerHTML='';
+    tags.forEach(tag=>{
+      const btn=document.createElement('button');
+      btn.className='extra-tag-btn'+(tag==='ALL'?' active':'');
+      btn.textContent=tag==='ALL'?'ALL':tag;
+      btn.onclick=()=>renderExtraList(tag);
+      bar.appendChild(btn);
+    });
+  });
+}
+
+function renderExtraList(tag){
+  extraCurrentTag=tag;
+  document.querySelectorAll('.extra-tag-btn').forEach(b=>{
+    const t=b.textContent==='ALL'?'ALL':b.textContent;
+    b.classList.toggle('active',t===tag);
+  });
+  const filtered=getExtraFiltered();
+  const count=document.getElementById('extraCount');
+  if(count) count.textContent=filtered.length;
+
+  ['extraList','mobExtraList'].forEach(id=>{
+    const list=document.getElementById(id);
+    if(!list)return;
+    list.innerHTML='';
+    if(!filtered.length){
+      list.innerHTML='<div style="padding:20px;color:var(--text-muted);font-family:var(--mono);font-size:11px">채널 없음</div>';
+      return;
+    }
+    filtered.forEach((ch,i)=>{
+      const globalIdx=filtered.indexOf(ch);
+      const isActive=activeExtraIdx!==null&&extraFiltered[activeExtraIdx]===ch;
+      const item=document.createElement('div');
+      item.className='extra-item'+(isActive?' active':'');
+      item.innerHTML=`
+        <div class="ex-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="ex-info">
+          <div class="ex-name">${decodeHtmlEntities(ch.name)}</div>
+          <div class="ex-tag">${ch.tag}</div>
+        </div>
+        <div class="ex-eq${isActive?'':' paused'}">
+          <div class="ex-eq-bar" style="height:40%"></div>
+          <div class="ex-eq-bar" style="height:100%"></div>
+          <div class="ex-eq-bar" style="height:60%"></div>
+        </div>`;
+      item.onclick=()=>{
+        extraFiltered=filtered;
+        activeExtraIdx=globalIdx;
+        playExtraChannel(ch);
+        if(isMobile()) switchTab('player');
+      };
+      list.appendChild(item);
+    });
+  });
+}
+
+function playExtraChannel(ch){
+  // clear original channel active state
+  activeId=null;
+  document.querySelectorAll('.ch-card').forEach(c=>c.classList.remove('active'));
+
+  const url=toListenUrl(ch.streamUrl);
+  audio.src=url;
+  audio.play().catch(()=>{});
+
+  const name=decodeHtmlEntities(ch.name);
+  const freq=ch.streamUrl.split(':').pop()+' Hz';
+
+  // update desktop player
+  document.getElementById('desktopPlayer').classList.add('visible');
+  document.getElementById('dpTag').textContent=name;
+  document.getElementById('dpFreq').textContent='EXTRA';
+  setMarqueeText('dpTitleMarquee','dpTitleInner','dpTitle',name);
+  setMarqueeText('dpArtistMarquee','dpArtistInner','dpArtist',ch.tag);
+  const dpAlbum=document.getElementById('dpAlbum');
+  dpAlbum.innerHTML='<div class="album-placeholder">📻</div>';
+  dpAlbum.classList.remove('has-art');
+
+  // update mobile player
+  document.getElementById('mpTag').textContent=name;
+  document.getElementById('mpFreq').textContent='EXTRA';
+  setMarqueeText('mpTitleMarquee','mpTitleInner','mpTitle',name);
+  setMarqueeText('mpArtistMarquee','mpArtistInner','mpArtist',ch.tag);
+  const mpAlbum=document.getElementById('mpAlbum');
+  mpAlbum.innerHTML='<div class="album-placeholder">📻</div>';
+  mpAlbum.classList.remove('has-art');
+
+  setPlayIcon(true);
+  setOnAir(false);
+  isSkipping=false;
+  startAutoSkipTimer();
+  setImmersiveBg(null);
+  // no NP polling for extra channels (no stats endpoint)
+  if(npTimer){clearInterval(npTimer);npTimer=null}
+  lastTrackStr='';currentArtUrl=null;
+  updateNowPlayingUI(ch.tag,name,null);
+
+  // re-render extra list to show active state
+  renderExtraList(extraCurrentTag);
+}
+
+function toggleExtraPanel(){
+  const panel=document.getElementById('extraPanel');
+  const mainSection=document.getElementById('mainGridSection');
+  const btn=document.getElementById('btnExtraTab');
+  const isActive=panel.classList.contains('active');
+  panel.classList.toggle('active',!isActive);
+  if(mainSection) mainSection.style.display=isActive?'block':'none';
+  if(btn){btn.classList.toggle('active',!isActive);}
+  document.querySelectorAll('.filter-btn:not(#btnExtraTab)').forEach(b=>b.style.opacity=isActive?'1':'0.4');
+  if(!isActive && extraChannels.length===0) loadExtraChannels();
+  else if(!isActive) renderExtraList(extraCurrentTag);
+}
+
+loadExtraChannels();
+
 buildTicker();buildFilters();buildGrid();
 
 /* ── NOW PLAYING ── */
