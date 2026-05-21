@@ -1147,12 +1147,12 @@ function playChannel(ch,card){
 }
 
 function togglePlay(){
-  if(!activeId)return;
+  if(!activeId && activeExtraIdx===null)return;  // 둘 다 없으면 무시
   if(audio.paused){
     audio.play().catch(()=>{});
     setPlayIcon(true);
-    startNowPlaying();
-    startAutoSkipTimer();  // 재생 재개 시에만 타이머 시작
+    if(activeId) startNowPlaying();   // NP 폴링은 기존 채널만
+    startAutoSkipTimer();
   }else{
     audio.pause();
     setPlayIcon(false);
