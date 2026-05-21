@@ -1151,7 +1151,7 @@ function togglePlay(){
   if(audio.paused){
     audio.play().catch(()=>{});
     setPlayIcon(true);
-    if(activeId) startNowPlaying();   // NP 폴링은 기존 채널만
+    startNowPlaying();   // 기존/추가 채널 모두 NP 폴링 시작
     startAutoSkipTimer();
   }else{
     audio.pause();
@@ -1344,10 +1344,7 @@ function playExtraChannel(ch){
   isSkipping=false;
   startAutoSkipTimer();
   setImmersiveBg(null);
-  // no NP polling for extra channels (no stats endpoint)
-  if(npTimer){clearInterval(npTimer);npTimer=null}
-  lastTrackStr='';currentArtUrl=null;
-  updateNowPlayingUI(ch.tag,name,null);
+  startNowPlaying();  // 추가채널도 NP 폴링 시작 (pollNowPlaying 내에서 extraFiltered 참조)
 
   // re-render extra list to show active state
   renderExtraList(extraCurrentTag);
@@ -1373,11 +1370,11 @@ buildTicker();buildFilters();buildGrid();
 /* ── NOW PLAYING ── */
 let npTimer=null,lastTrackStr='',currentArtUrl=null;
 
-async function fetchStatsMeta(port){
+async function fetchStatsMeta(port,host='live01.inlive.co.kr'){
   try{
     const ctrl=new AbortController();
     const tid=setTimeout(()=>ctrl.abort(),5000);
-    const res=await fetch(`https://live01.inlive.co.kr/stats.html?port=${port}`,
+    const res=await fetch(`https://${host}/stats.html?port=${port}`,
       {cache:'no-store',headers:{'Accept':'text/html,application/json,*/*'},signal:ctrl.signal});
     clearTimeout(tid);
     if(!res.ok)return null;
@@ -1408,11 +1405,11 @@ function parseArtistTitle(artist,raw){
   }
   return{artist:(artist||'').trim(),title:raw};
 }
-async function fetchStatsMetaViaProxy(port){
+async function fetchStatsMetaViaProxy(port,host='live01.inlive.co.kr'){
   try{
     const ctrl=new AbortController();
     const tid=setTimeout(()=>ctrl.abort(),5000);
-    const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://live01.inlive.co.kr/stats.html?port=${port}`)}`,{cache:'no-store',signal:ctrl.signal});
+    const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://${host}/stats.html?port=${port}`)}`,{cache:'no-store',signal:ctrl.signal});
     clearTimeout(tid);
     if(!res.ok)return null;
     const d=await res.json();
@@ -1477,10 +1474,23 @@ function updateNowPlayingUI(artist,title,artUrl,loading=false){
 }
 
 async function pollNowPlaying(){
-  if(!activeId)return;
-  const port=getPort(activeId);
-  let meta=await fetchStatsMeta(port);
-  if(!meta)meta=await fetchStatsMetaViaProxy(port);
+  let port, host;
+  if(activeId){
+    // 기존 채널: id 기반 포트, live01 고정
+    port=getPort(activeId);
+    host='live01.inlive.co.kr';
+  } else if(activeExtraIdx!==null && extraFiltered[activeExtraIdx]){
+    // 추가채널: streamUrl 에서 호스트/포트 추출
+    try{
+      const u=new URL(extraFiltered[activeExtraIdx].streamUrl);
+      port=u.port;
+      host=u.hostname;
+    }catch(e){return}
+  } else {
+    return;
+  }
+  let meta=await fetchStatsMeta(port,host);
+  if(!meta)meta=await fetchStatsMetaViaProxy(port,host);
   if(!meta)return;
   const trackStr=`${meta.artist}||${meta.title}`;
   if(trackStr===lastTrackStr)return;
