@@ -25,7 +25,8 @@
   --surface:#111118;
   --surface2:#18181f;
   --border:rgba(255,255,255,0.07);
-  --border-bright:rgba(255,180,60,0.35);
+  --border-bright:rgba(var(--accent-rgb),0.35);
+  --accent-rgb:245,183,64;
   --gold:#f5b740;
   --gold2:#e8960a;
   --accent:var(--gold);
@@ -100,7 +101,7 @@ body::before{
 .logo-wordmark{
   font-family:var(--mono);font-size:26px;font-weight:700;
   letter-spacing:0.15em;color:var(--accent);line-height:1;
-  text-shadow:0 0 30px rgba(245,183,64,0.4);
+  text-shadow:0 0 30px rgba(var(--accent-rgb),0.4);
 }
 .logo-sub{
   font-family:var(--mono);font-size:9px;letter-spacing:0.28em;
@@ -184,11 +185,11 @@ body::before{
   z-index:2;pointer-events:none;
 }
 @media(hover:hover){
-  .ch-card:hover{border-color:var(--border-bright);box-shadow:0 0 20px rgba(245,183,64,0.1);z-index:2;transform:scale(1.02)}
+  .ch-card:hover{border-color:var(--border-bright);box-shadow:0 0 20px rgba(var(--accent-rgb),0.1);z-index:2;transform:scale(1.02)}
   .ch-card:hover .ch-thumb{transform:scale(1.07)}
 }
 @media(hover:none){.ch-card:active{border-color:var(--border-bright);opacity:0.82}}
-.ch-card.active{border-color:var(--accent);box-shadow:0 0 24px rgba(245,183,64,0.2)}
+.ch-card.active{border-color:var(--accent);box-shadow:0 0 24px rgba(var(--accent-rgb),0.2)}
 .ch-top-line{display:none}
 .ch-card.active .ch-top-line{
   display:block;position:absolute;top:0;left:0;right:0;
@@ -217,7 +218,7 @@ body::before{
   display:none;z-index:1000;overflow:hidden;
   padding-bottom:var(--safe-b);
   background:rgba(6,6,10,0.92);
-  border-top:1px solid rgba(255,180,60,0.2);
+  border-top:1px solid rgba(var(--accent-rgb),0.2);
 }
 .desktop-player.visible{display:block}
 .desktop-player::before{
@@ -244,13 +245,13 @@ body::before{
 }
 .dp-album{
   width:120px;height:120px;border-radius:6px;flex-shrink:0;overflow:hidden;
-  background:var(--surface2);border:1px solid rgba(255,180,60,0.25);
+  background:var(--surface2);border:1px solid rgba(var(--accent-rgb),0.25);
   display:flex;align-items:center;justify-content:center;font-size:24px;
   box-shadow:0 4px 24px rgba(0,0,0,0.5);transition:box-shadow 0.8s,border-color 0.8s;
 }
 .dp-album img{width:100%;height:100%;object-fit:cover;display:block}
 .dp-album .album-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px}
-.dp-album.has-art{box-shadow:0 4px 32px rgba(0,0,0,0.6),0 0 0 1px rgba(255,180,60,0.3)}
+.dp-album.has-art{box-shadow:0 4px 32px rgba(0,0,0,0.6),0 0 0 1px rgba(var(--accent-rgb),0.3)}
 .dp-track{flex:1;min-width:0;overflow:hidden}
 .dp-tag{
   font-family:var(--mono);font-size:11px;letter-spacing:0.2em;
@@ -262,7 +263,7 @@ body::before{
   font-family:var(--mono);font-size:18px;font-weight:700;
   color:var(--accent);letter-spacing:0.05em;
   flex-shrink:0;min-width:82px;text-align:right;
-  text-shadow:0 0 20px rgba(245,183,64,0.5);
+  text-shadow:0 0 20px rgba(var(--accent-rgb),0.5);
 }
 .play-btn{
   width:52px;height:52px;border-radius:50%;
@@ -271,7 +272,7 @@ body::before{
   cursor:pointer;flex-shrink:0;
   transition:background 0.15s,color 0.15s,box-shadow 0.8s;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-  box-shadow:0 0 16px rgba(245,183,64,0.2);
+  box-shadow:0 0 16px rgba(var(--accent-rgb),0.2);
 }
 @media(hover:hover){.play-btn:hover{background:var(--accent);color:#000}}
 .play-btn:active{background:var(--accent);color:#000}
@@ -415,13 +416,13 @@ audio{display:none}
   width:100%;max-width:320px;aspect-ratio:1/1;
   border-radius:12px;overflow:hidden;
   background:var(--surface2);
-  box-shadow:0 24px 60px rgba(0,0,0,0.7),0 0 0 1px rgba(255,180,60,0.15);
+  box-shadow:0 24px 60px rgba(0,0,0,0.7),0 0 0 1px rgba(var(--accent-rgb),0.15);
   display:flex;align-items:center;justify-content:center;font-size:60px;
   transition:box-shadow 0.8s;
 }
 .mp-album img{width:100%;height:100%;object-fit:cover;display:block}
 .mp-album .album-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:60px}
-.mp-album.has-art{box-shadow:0 24px 60px rgba(0,0,0,0.7),0 0 40px rgba(245,183,64,0.15),0 0 0 1px rgba(255,180,60,0.3)}
+.mp-album.has-art{box-shadow:0 24px 60px rgba(0,0,0,0.7),0 0 40px rgba(var(--accent-rgb),0.15),0 0 0 1px rgba(var(--accent-rgb),0.3)}
 
 /* 트랙 정보 */
 .mp-track{padding:0 28px 16px}
@@ -451,12 +452,12 @@ audio{display:none}
 }
 .mp-play-btn{
   width:72px;height:72px;border-radius:50%;
-  border:2px solid var(--accent);background:rgba(245,183,64,0.1);color:var(--accent);
+  border:2px solid var(--accent);background:rgba(var(--accent-rgb),0.1);color:var(--accent);
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;
   transition:background 0.15s,transform 0.1s;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-  box-shadow:0 0 30px rgba(245,183,64,0.25);
+  box-shadow:0 0 30px rgba(var(--accent-rgb),0.25);
 }
 .mp-play-btn:active{background:var(--accent);color:#000;transform:scale(0.95)}
 .mp-play-btn svg{width:28px;height:28px}
@@ -838,6 +839,120 @@ function setMarqueeText(mId,iId,sId,text){
   applyMarquee(m,i,s);
 }
 
+/* ── Dominant Color 추출 & CSS 변수 실시간 반영 ── */
+(function(){
+  // 캔버스 샘플링으로 dominant color 추출
+  function extractDominantColor(imgEl, callback){
+    const SIZE = 80; // 다운샘플 크기 (성능)
+    const canvas = document.createElement('canvas');
+    canvas.width = SIZE; canvas.height = SIZE;
+    const ctx = canvas.getContext('2d');
+    try {
+      ctx.drawImage(imgEl, 0, 0, SIZE, SIZE);
+      const data = ctx.getImageData(0, 0, SIZE, SIZE).data;
+
+      // 버킷 양자화: 색상을 16단계로 줄여 가장 많은 버킷 찾기
+      const buckets = {};
+      for(let i = 0; i < data.length; i += 4){
+        const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+        if(a < 128) continue; // 투명 픽셀 제외
+        // 너무 어두운/밝은/무채색 제외
+        const lum = 0.299*r + 0.587*g + 0.114*b;
+        if(lum < 28 || lum > 230) continue;
+        const sat = Math.max(r,g,b) - Math.min(r,g,b);
+        if(sat < 30) continue; // 회색 계열 제외
+        const qr = r>>4, qg = g>>4, qb = b>>4;
+        const key = (qr<<8)|(qg<<4)|qb;
+        buckets[key] = (buckets[key]||0) + 1;
+      }
+
+      // 가장 많은 버킷 선택
+      let bestKey = null, bestCount = 0;
+      for(const [k,v] of Object.entries(buckets)){
+        if(v > bestCount){ bestCount = v; bestKey = parseInt(k); }
+      }
+
+      if(bestKey === null){ callback(null); return; }
+
+      // 버킷 키 → RGB 복원 (중간값)
+      const r = ((bestKey>>8)&0xF)*17 + 8;
+      const g = ((bestKey>>4)&0xF)*17 + 8;
+      const b = (bestKey&0xF)*17 + 8;
+
+      // HSL 변환해서 채도/밝기 보정
+      const {h, s, l} = rgbToHsl(r, g, b);
+      // 채도 강화, 밝기 적당히 (너무 어둡거나 밝으면 조정)
+      const newL = Math.min(Math.max(l, 0.45), 0.72);
+      const newS = Math.min(s * 1.2, 1.0);
+      const [fr, fg, fb] = hslToRgb(h, newS, newL);
+      callback({ r: fr, g: fg, b: fb, h, s: newS, l: newL });
+    } catch(e) {
+      // CORS 등 실패 시 null
+      callback(null);
+    }
+  }
+
+  function rgbToHsl(r, g, b){
+    r/=255; g/=255; b/=255;
+    const max=Math.max(r,g,b), min=Math.min(r,g,b);
+    let h, s, l=(max+min)/2;
+    if(max===min){ h=s=0; }
+    else {
+      const d=max-min;
+      s = l>0.5 ? d/(2-max-min) : d/(max+min);
+      switch(max){
+        case r: h=(g-b)/d+(g<b?6:0); break;
+        case g: h=(b-r)/d+2; break;
+        case b: h=(r-g)/d+4; break;
+      }
+      h/=6;
+    }
+    return {h, s, l};
+  }
+
+  function hslToRgb(h, s, l){
+    let r, g, b;
+    if(s===0){ r=g=b=l; }
+    else {
+      const q=l<0.5?l*(1+s):l+s-l*s, p=2*l-q;
+      r=hue2rgb(p,q,h+1/3);
+      g=hue2rgb(p,q,h);
+      b=hue2rgb(p,q,h-1/3);
+    }
+    return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
+  }
+  function hue2rgb(p,q,t){
+    if(t<0)t+=1; if(t>1)t-=1;
+    if(t<1/6)return p+(q-p)*6*t;
+    if(t<1/2)return q;
+    if(t<2/3)return p+(q-p)*(2/3-t)*6;
+    return p;
+  }
+
+  // CSS 변수 업데이트
+  function applyAccentColor(color){
+    const root = document.documentElement;
+    if(!color){
+      // 기본값 복원
+      root.style.setProperty('--accent', 'var(--gold)');
+      root.style.setProperty('--border-bright', 'rgba(245,183,64,0.35)');
+      root.style.removeProperty('--accent-rgb');
+      return;
+    }
+    const {r, g, b} = color;
+    const hex = `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+    root.style.setProperty('--accent', hex);
+    root.style.setProperty('--accent-rgb', `${r},${g},${b}`);
+    root.style.setProperty('--border-bright', `rgba(${r},${g},${b},0.45)`);
+    // 플레이어 버튼 glow도 업데이트 (인라인으로 직접 참조하는 rgba 처리)
+    // box-shadow는 CSS var로 접근 어렵지만 --accent-rgb로 대응 가능
+  }
+
+  // 전역 노출
+  window._applyAccentColor = applyAccentColor;
+  window._extractDominantColor = extractDominantColor;
+})();
+
 /* ── Immersive BG 엔진 ── */
 const FALLBACK_BG=[
   'linear-gradient(135deg,#1d1f27 0%,#0a0a0f 100%)',
@@ -861,11 +976,8 @@ function setLayer(el, url) {
 
 function setImmersiveBg(imageUrl){
   const isA=activeBgSlot==='a';
-  // 데스크탑 전체 배경
   const dA=document.getElementById('bgArtA'),dB=document.getElementById('bgArtB');
-  // 데스크탑 플레이어
   const dpA=document.getElementById('dpBgA'),dpB=document.getElementById('dpBgB');
-  // 모바일 플레이어
   const mpA=document.getElementById('mpBgA'),mpB=document.getElementById('mpBgB');
 
   const nextD=isA?dB:dA, currD=isA?dA:dB;
@@ -879,6 +991,14 @@ function setImmersiveBg(imageUrl){
     [currD,currDp,currMp].forEach(el=>el.classList.remove('active'));
   });
   activeBgSlot=isA?'b':'a';
+
+  /* ── Dominant color 추출 → --accent / --border-bright 실시간 반영 ── */
+  if(!imageUrl){ window._applyAccentColor(null); return; }
+  const probeImg=new Image();
+  probeImg.crossOrigin='anonymous';
+  probeImg.onload=()=>{ window._extractDominantColor(probeImg, c=>window._applyAccentColor(c)); };
+  probeImg.onerror=()=>{}; // CORS 실패 시 기본 색상 유지
+  probeImg.src=imageUrl;
 }
 
 /* ── 빌드 ── */
