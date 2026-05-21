@@ -862,6 +862,8 @@ const AUTO_SKIP_SEC=60;          // 재생 없을 시 다음 채널로 넘어가
 const CONNECT_TIMEOUT_SEC=10;    // 연결 타임아웃 (초) — 이 시간 안에 playing 없으면 자동 스킵
 let autoSkipTimer=null;
 let connectTimer=null;
+const skippedChannelIds=new Set();    // 이번 세션에서 스킵된 채널 ID (리로드 전까지 숨김)
+const skippedExtraUrls=new Set();     // 이번 세션에서 스킵된 추가채널 streamUrl
 
 function startConnectTimer(){
   clearConnectTimer();
@@ -918,7 +920,8 @@ audio.addEventListener('error',()=>{
 });
 audio.addEventListener('stalled',()=>{
   setOnAir(false);
-  if(!isSkipping) startAutoSkipTimer();  // 스킵 진행 중엔 무시
+  clearConnectTimer();
+  if(!isSkipping) startConnectTimer();  // stalled 도 연결 타임아웃으로 처리
 });
 
 function getPort(id){return 10000+id*10}
@@ -1094,32 +1097,51 @@ function buildGrid(){
 /* ── 플레이어 제어 ── */
 function playPrevChannel() {
   if (activeExtraIdx !== null) {
-    const filtered = getExtraFiltered();
-    if (!filtered.length) return;
-    activeExtraIdx = (activeExtraIdx - 1 + filtered.length) % filtered.length;
-    playExtraChannel(filtered[activeExtraIdx]);
+    const available = getExtraFiltered().filter(c => !skippedExtraUrls.has(c.streamUrl));
+    if (!available.length) return;
+    let idx = available.findIndex(c => extraFiltered[activeExtraIdx] === c);
+    idx = (idx - 1 + available.length) % available.length;
+    extraFiltered = available;
+    activeExtraIdx = idx;
+    playExtraChannel(available[idx]);
     return;
   }
   if (!activeId) return;
-  let idx = channels.findIndex(c => c.id === activeId);
-  if (idx === -1) return;
-  idx = (idx - 1 + channels.length) % channels.length;
-  playChannel(channels[idx], null);
+  const available = channels.filter(c => !skippedChannelIds.has(c.id));
+  if (!available.length) return;
+  let idx = available.findIndex(c => c.id === activeId);
+  idx = (idx - 1 + available.length) % available.length;
+  playChannel(available[idx], null);
 }
 
 function playNextChannel() {
   if (activeExtraIdx !== null) {
-    const filtered = getExtraFiltered();
-    if (!filtered.length) return;
-    activeExtraIdx = (activeExtraIdx + 1) % filtered.length;
-    playExtraChannel(filtered[activeExtraIdx]);
+    const allFiltered = getExtraFiltered();
+    // 현재 채널 스킵 목록에 추가 후 숨김
+    const curCh = extraFiltered[activeExtraIdx];
+    if (curCh) {
+      skippedExtraUrls.add(curCh.streamUrl);
+      renderExtraList(extraCurrentTag);
+    }
+    // 스킵된 것 제외한 목록에서 다음 채널 선택
+    const available = allFiltered.filter(c => !skippedExtraUrls.has(c.streamUrl));
+    if (!available.length) { setPlayIcon(false); return; }
+    const nextCh = available[0];
+    extraFiltered = available;
+    activeExtraIdx = 0;
+    playExtraChannel(nextCh);
     return;
   }
   if (!activeId) return;
-  let idx = channels.findIndex(c => c.id === activeId);
-  if (idx === -1) return;
-  idx = (idx + 1) % channels.length;
-  playChannel(channels[idx], null);
+  // 현재 채널 스킵 목록에 추가 후 숨김
+  skippedChannelIds.add(activeId);
+  document.querySelectorAll(`.ch-card[data-id="${activeId}"],.mob-ch-card[data-id="${activeId}"]`).forEach(c=>c.style.display='none');
+  // 스킵된 것 제외한 채널 중 다음 선택
+  const available = channels.filter(c => !skippedChannelIds.has(c.id));
+  if (!available.length) { setPlayIcon(false); return; }
+  let idx = available.findIndex(c => c.id === activeId);
+  idx = (idx + 1) % available.length;
+  playChannel(available[idx], null);
 }
 
 function playChannel(ch,card){
@@ -1286,7 +1308,7 @@ function renderExtraList(tag){
     const t=b.textContent==='ALL'?'ALL':b.textContent;
     b.classList.toggle('active',t===tag);
   });
-  const filtered=getExtraFiltered();
+  const filtered=getExtraFiltered().filter(c=>!skippedExtraUrls.has(c.streamUrl));
   const count=document.getElementById('extraCount');
   if(count) count.textContent=filtered.length;
 
