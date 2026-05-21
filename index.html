@@ -891,6 +891,7 @@ audio.addEventListener('playing',()=>{
 });
 audio.addEventListener('waiting',()=>{
   setOnAir(false);
+  if(!isSkipping) startAutoSkipTimer();  // 스킵 진행 중엔 무시
 });
 audio.addEventListener('pause',()=>{
   setOnAir(false);
