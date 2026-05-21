@@ -870,7 +870,7 @@ function startConnectTimer(){
   connectTimer=setTimeout(()=>{
     console.debug('[CONNECT] timeout — skipping');
     isSkipping=true;
-    playNextChannel();
+    playNextChannel(true);
   }, CONNECT_TIMEOUT_SEC*1000);
 }
 function clearConnectTimer(){
@@ -890,7 +890,7 @@ function startAutoSkipTimer(){
   clearAutoSkipTimer();
   autoSkipTimer=setTimeout(()=>{
     isSkipping=true;
-    playNextChannel();
+    playNextChannel(true);
     // 새 채널에서도 playing 없으면 다시 타이머 걸어야 하므로
     // isSkipping은 playChannel 내 startAutoSkipTimer 호출 후 해제
   }, AUTO_SKIP_SEC*1000);
@@ -916,7 +916,7 @@ audio.addEventListener('pause',()=>{
 audio.addEventListener('error',()=>{
   setOnAir(false);
   clearConnectTimer();
-  if(!isSkipping) playNextChannel();  // error 즉시 스킵
+  if(!isSkipping) playNextChannel(true);  // error 즉시 스킵
 });
 audio.addEventListener('stalled',()=>{
   setOnAir(false);
@@ -1097,51 +1097,59 @@ function buildGrid(){
 /* ── 플레이어 제어 ── */
 function playPrevChannel() {
   if (activeExtraIdx !== null) {
-    const available = getExtraFiltered().filter(c => !skippedExtraUrls.has(c.streamUrl));
+    const allFiltered = getExtraFiltered();
+    const available = allFiltered.filter(c => !skippedExtraUrls.has(c.streamUrl));
     if (!available.length) return;
-    let idx = available.findIndex(c => extraFiltered[activeExtraIdx] === c);
-    idx = (idx - 1 + available.length) % available.length;
+    // 현재 채널의 전체 목록 내 위치 기준으로 이전 available 채널 선택
+    const curCh = extraFiltered[activeExtraIdx];
+    const curPosInAll = curCh ? allFiltered.findIndex(c => c.streamUrl === curCh.streamUrl) : allFiltered.length;
+    // curPos 보다 앞에 있는 available 채널 중 마지막, 없으면 wrap-around
+    const before = available.filter(c => allFiltered.indexOf(c) < curPosInAll);
+    const prevCh = before.length ? before[before.length - 1] : available[available.length - 1];
     extraFiltered = available;
-    activeExtraIdx = idx;
-    playExtraChannel(available[idx]);
+    activeExtraIdx = available.indexOf(prevCh);
+    playExtraChannel(prevCh);
     return;
   }
   if (!activeId) return;
   const available = channels.filter(c => !skippedChannelIds.has(c.id));
   if (!available.length) return;
-  let idx = available.findIndex(c => c.id === activeId);
-  idx = (idx - 1 + available.length) % available.length;
-  playChannel(available[idx], null);
+  const curPosInAll = channels.findIndex(c => c.id === activeId);
+  const before = available.filter(c => channels.indexOf(c) < curPosInAll);
+  const prevCh = before.length ? before[before.length - 1] : available[available.length - 1];
+  playChannel(prevCh, null);
 }
 
-function playNextChannel() {
+function playNextChannel(doSkip=false) {
   if (activeExtraIdx !== null) {
     const allFiltered = getExtraFiltered();
-    // 현재 채널 스킵 목록에 추가 후 숨김
     const curCh = extraFiltered[activeExtraIdx];
-    if (curCh) {
+    // 자동 스킵 시에만 현재 채널 숨김
+    if (doSkip && curCh) {
       skippedExtraUrls.add(curCh.streamUrl);
       renderExtraList(extraCurrentTag);
     }
-    // 스킵된 것 제외한 목록에서 다음 채널 선택
     const available = allFiltered.filter(c => !skippedExtraUrls.has(c.streamUrl));
     if (!available.length) { setPlayIcon(false); return; }
-    const nextCh = available[0];
+    const curPosInAll = curCh ? allFiltered.findIndex(c => c.streamUrl === curCh.streamUrl) : -1;
+    const nextCh = available.find(c => allFiltered.indexOf(c) > curPosInAll) || available[0];
     extraFiltered = available;
-    activeExtraIdx = 0;
+    activeExtraIdx = available.indexOf(nextCh);
     playExtraChannel(nextCh);
     return;
   }
   if (!activeId) return;
-  // 현재 채널 스킵 목록에 추가 후 숨김
-  skippedChannelIds.add(activeId);
-  document.querySelectorAll(`.ch-card[data-id="${activeId}"],.mob-ch-card[data-id="${activeId}"]`).forEach(c=>c.style.display='none');
-  // 스킵된 것 제외한 채널 중 다음 선택
+  const prevId = activeId;
+  // 자동 스킵 시에만 현재 채널 숨김
+  if (doSkip) {
+    skippedChannelIds.add(prevId);
+    document.querySelectorAll(`.ch-card[data-id="${prevId}"],.mob-ch-card[data-id="${prevId}"]`).forEach(c=>c.style.display='none');
+  }
   const available = channels.filter(c => !skippedChannelIds.has(c.id));
   if (!available.length) { setPlayIcon(false); return; }
-  let idx = available.findIndex(c => c.id === activeId);
-  idx = (idx + 1) % available.length;
-  playChannel(available[idx], null);
+  const curPosInAll = channels.findIndex(c => c.id === prevId);
+  const nextCh = available.find(c => channels.indexOf(c) > curPosInAll) || available[0];
+  playChannel(nextCh, null);
 }
 
 function playChannel(ch,card){
