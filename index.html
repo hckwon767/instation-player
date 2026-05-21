@@ -858,8 +858,22 @@ let activeId=null,isMuted=false;
 const isMobile=()=>window.innerWidth<=640;
 
 /* ── 자동 채널 스킵 설정 ── */
-const AUTO_SKIP_SEC=10;          // 재생 없을 시 다음 채널로 넘어가는 대기 시간 (초)
+const AUTO_SKIP_SEC=60;          // 재생 없을 시 다음 채널로 넘어가는 대기 시간 (초)
+const CONNECT_TIMEOUT_SEC=10;    // 연결 타임아웃 (초) — 이 시간 안에 playing 없으면 자동 스킵
 let autoSkipTimer=null;
+let connectTimer=null;
+
+function startConnectTimer(){
+  clearConnectTimer();
+  connectTimer=setTimeout(()=>{
+    console.debug('[CONNECT] timeout — skipping');
+    isSkipping=true;
+    playNextChannel();
+  }, CONNECT_TIMEOUT_SEC*1000);
+}
+function clearConnectTimer(){
+  if(connectTimer){clearTimeout(connectTimer);connectTimer=null}
+}
 
 /* ── ON AIR 상태 제어 ── */
 function setOnAir(active){
@@ -887,11 +901,11 @@ function clearAutoSkipTimer(){
 audio.addEventListener('playing',()=>{
   isSkipping=false;
   setOnAir(true);
+  clearConnectTimer();   // 연결 성공 — 타임아웃 취소
   clearAutoSkipTimer();
 });
 audio.addEventListener('waiting',()=>{
   setOnAir(false);
-  if(!isSkipping) startAutoSkipTimer();  // 스킵 진행 중엔 무시
 });
 audio.addEventListener('pause',()=>{
   setOnAir(false);
@@ -899,7 +913,8 @@ audio.addEventListener('pause',()=>{
 });
 audio.addEventListener('error',()=>{
   setOnAir(false);
-  if(!isSkipping) startAutoSkipTimer();  // 스킵 진행 중엔 무시
+  clearConnectTimer();
+  if(!isSkipping) playNextChannel();  // error 즉시 스킵
 });
 audio.addEventListener('stalled',()=>{
   setOnAir(false);
@@ -1117,6 +1132,7 @@ function playChannel(ch,card){
 
   audio.src=`https://live01.inlive.co.kr/listen.html?port=${getPort(ch.id)}`;
   audio.play().catch(()=>{});
+  startConnectTimer();   // 연결 타임아웃 시작
 
   const freq=fakeFreq(ch.id);
 
@@ -1317,6 +1333,7 @@ function playExtraChannel(ch){
   const url=toListenUrl(ch.streamUrl);
   audio.src=url;
   audio.play().catch(()=>{});
+  startConnectTimer();   // 연결 타임아웃 시작
 
   const name=decodeHtmlEntities(ch.name);
   const freq=ch.streamUrl.split(':').pop()+' Hz';
