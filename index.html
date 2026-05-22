@@ -37,6 +37,7 @@
   --sans:'Noto Sans KR',sans-serif;
   --safe-t:env(safe-area-inset-top,0px);
   --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-r:env(safe-area-inset-right,0px);
   --safe-l:env(safe-area-inset-left,0px);
   --safe-r:env(safe-area-inset-right,0px);
   --tabbar-h:60px;
@@ -557,6 +558,9 @@ audio{display:none}
 .mp-side-btn:active { background: rgba(245, 183, 64, 0.2); transform: scale(0.92); }
 .mp-side-btn svg { width: 20px; height: 20px; }
 
+/* 플레이어 우측 패널 (가로모드에서 분리, 세로모드에서는 그냥 쌓임) */
+.mp-right{display:contents}  /* 세로모드: 투명 래퍼처럼 동작 */
+
 /* 볼륨 */
 .mp-vol{
   display:flex;align-items:center;gap:10px;
@@ -643,6 +647,77 @@ audio{display:none}
 @media all and (display-mode:standalone){
   .install-banner{display:none}
   body{padding-top:env(safe-area-inset-top)}
+}
+
+/* =============================================
+   모바일 가로모드 (landscape)
+   ============================================= */
+@media(max-width:640px) and (orientation:landscape){
+  /* 탭바를 하단 대신 우측 세로로 배치 */
+  .mobile-tabbar{
+    top:0;bottom:0;left:auto;right:0;
+    width:calc(56px + var(--safe-r,0px));
+    height:100%;
+    border-top:none;border-left:1px solid var(--border);
+    padding-bottom:0;padding-right:var(--safe-r,0px);
+  }
+  .mobile-tabbar::before{
+    top:0;left:0;right:auto;bottom:0;
+    width:1px;height:100%;
+    background:linear-gradient(180deg,transparent,var(--accent),transparent);
+  }
+  .tabbar-inner{
+    flex-direction:column;
+    height:100%;width:56px;
+  }
+  .tab-btn{flex:1;width:56px}
+
+  /* 채널/추가채널 뷰 — 우측 탭바 만큼 여백 */
+  #mobileChannels,#mobileExtra{
+    padding-bottom:0;
+    padding-right:calc(56px + var(--safe-r,0px));
+  }
+  .mob-header{
+    padding-top:calc(var(--safe-t) + 10px);
+    padding-bottom:10px;
+  }
+
+  /* 플레이어 가로 레이아웃: 앨범아트 왼쪽 / 정보+컨트롤 오른쪽 */
+  #mobilePlayer.active{
+    flex-direction:row;
+    padding-right:calc(56px + var(--safe-r,0px));
+  }
+  .mp-content{
+    flex-direction:row;
+    padding-top:var(--safe-t);
+    padding-bottom:0;
+    width:100%;
+  }
+  /* 앨범아트 영역 — 왼쪽 절반 */
+  .mp-album-wrap{
+    flex:0 0 auto;
+    width:calc(min(45vw, 45vh));
+    padding:12px 10px 12px 20px;
+  }
+  .mp-album{
+    max-width:100%;
+  }
+  /* 정보+컨트롤 영역 — 오른쪽 */
+  .mp-right{
+    display:flex;flex-direction:column;justify-content:center;
+    flex:1;min-width:0;overflow:hidden;
+  }
+  .mp-header{padding:10px 16px 6px}
+  .mp-track{padding:0 16px 8px}
+  .mp-title{font-size:22px}
+  .mp-artist{font-size:16px}
+  .mp-freq{padding:0 16px 6px;font-size:11px}
+  .mp-controls{padding:0 16px 10px;gap:20px}
+  .mp-play-btn{width:56px;height:56px}
+  .mp-play-btn svg{width:22px;height:22px}
+  .mp-side-btn{width:40px;height:40px}
+  .mp-side-btn svg{width:17px;height:17px}
+  .mp-vol{padding:0 16px 8px}
 }
 </style>
 </head>
@@ -744,43 +819,43 @@ audio{display:none}
     <div class="mp-bg-b" id="mpBgB"></div>
     <div class="mp-vignette"></div>
     <div class="mp-content">
-      <div class="mp-header">
-        <div class="mp-logo">INSTATION</div>
-        <div class="mp-on-air" id="mpOnAir">ON AIR</div>
-      </div>
       <div class="mp-album-wrap">
         <div class="mp-album" id="mpAlbum"><div class="album-placeholder">🎵</div></div>
       </div>
-      <div class="mp-track">
-        <div class="mp-tag" id="mpTag">INSTATION</div>
-        <div class="mp-title-marquee" id="mpTitleMarquee">
-          <div class="mp-title-inner" id="mpTitleInner">
-            <span class="mp-title" id="mpTitle">채널을 선택하세요</span>
+      <div class="mp-right">
+        <div class="mp-header">
+          <div class="mp-logo">INSTATION</div>
+          <div class="mp-on-air" id="mpOnAir">ON AIR</div>
+        </div>
+        <div class="mp-track">
+          <div class="mp-tag" id="mpTag">INSTATION</div>
+          <div class="mp-title-marquee" id="mpTitleMarquee">
+            <div class="mp-title-inner" id="mpTitleInner">
+              <span class="mp-title" id="mpTitle">채널을 선택하세요</span>
+            </div>
+          </div>
+          <div class="mp-artist-marquee" id="mpArtistMarquee">
+            <div class="mp-artist-inner" id="mpArtistInner">
+              <span class="mp-artist" id="mpArtist"></span>
+            </div>
           </div>
         </div>
-        <div class="mp-artist-marquee" id="mpArtistMarquee">
-          <div class="mp-artist-inner" id="mpArtistInner">
-            <span class="mp-artist" id="mpArtist"></span>
-          </div>
+        <div class="mp-freq" id="mpFreq"></div>
+        <div class="mp-controls">
+          <button class="mp-side-btn" onclick="playPrevChannel()" aria-label="이전 채널">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="19,20 9,12 19,4 19,20 M5,4 5,20 8,20 8,4"/></svg>
+          </button>
+          <button class="mp-play-btn" id="mpPlayBtn" onclick="togglePlay()" aria-label="재생/일시정지">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+          </button>
+          <button class="mp-side-btn" onclick="playNextChannel()" aria-label="다음 채널">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,4 15,12 5,20 5,4 M16,4 16,20 19,20 19,4"/></svg>
+          </button>
         </div>
-      </div>
-      <div class="mp-freq" id="mpFreq"></div>
-      <div class="mp-controls">
-        <button class="mp-side-btn" onclick="playPrevChannel()" aria-label="이전 채널">
-          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="19,20 9,12 19,4 19,20 M5,4 5,20 8,20 8,4"/></svg>
-        </button>
-        
-        <button class="mp-play-btn" id="mpPlayBtn" onclick="togglePlay()" aria-label="재생/일시정지">
-          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-        </button>
-        
-        <button class="mp-side-btn" onclick="playNextChannel()" aria-label="다음 채널">
-          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,4 15,12 5,20 5,4 M16,4 16,20 19,20 19,4"/></svg>
-        </button>
-      </div>
-      <div class="mp-vol">
-        <button class="mp-vol-icon" onclick="toggleMute()" id="mpVolIcon">🔊</button>
-        <input type="range" min="0" max="1" step="0.01" value="1" class="mp-vol-slider" id="mpVolSlider" oninput="setVolume(this.value)">
+        <div class="mp-vol">
+          <button class="mp-vol-icon" onclick="toggleMute()" id="mpVolIcon">🔊</button>
+          <input type="range" min="0" max="1" step="0.01" value="1" class="mp-vol-slider" id="mpVolSlider" oninput="setVolume(this.value)">
+        </div>
       </div>
     </div>
   </div>
