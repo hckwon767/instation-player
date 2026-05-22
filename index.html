@@ -980,6 +980,7 @@ audio.addEventListener('playing',()=>{
   setOnAir(true);
   clearConnectTimer();   // 연결 성공 — 타임아웃 취소
   clearAutoSkipTimer();
+  updateMediaSession();  // Media Session 메타데이터 갱신
 });
 audio.addEventListener('waiting',()=>{
   setOnAir(false);
@@ -987,6 +988,7 @@ audio.addEventListener('waiting',()=>{
 audio.addEventListener('pause',()=>{
   setOnAir(false);
   clearAutoSkipTimer();
+  if('mediaSession' in navigator) navigator.mediaSession.playbackState='paused';
 });
 audio.addEventListener('error',()=>{
   setOnAir(false);
@@ -997,6 +999,65 @@ audio.addEventListener('stalled',()=>{
   setOnAir(false);
   clearConnectTimer();
   if(!isSkipping) startConnectTimer();  // stalled 도 연결 타임아웃으로 처리
+});
+
+/* ── Media Session API ── */
+function updateMediaSession(){
+  if(!('mediaSession' in navigator)) return;
+  // 현재 채널명 파악
+  let chName='INSTATION', chArtist='인터넷 라디오';
+  if(activeId){
+    const ch=channels.find(c=>c.id===activeId);
+    if(ch){chName=ch.name;chArtist=ch.tag}
+  } else if(activeExtraIdx!==null && extraFiltered[activeExtraIdx]){
+    const ch=extraFiltered[activeExtraIdx];
+    chName=decodeHtmlEntities(ch.name);chArtist=ch.tag;
+  }
+  // NP 데이터가 있으면 트랙명 우선
+  const npTitle=document.getElementById('mpTitle')?.textContent||'';
+  const npArtist=document.getElementById('mpArtist')?.textContent||'';
+  const title=npTitle&&npTitle!=='–'&&npTitle!=='채널을 선택하세요'?npTitle:chName;
+  const artist=npArtist||chArtist;
+
+  const artworkArr=currentArtUrl
+    ?[{src:currentArtUrl,sizes:'600x600',type:'image/png'}]
+    :[];
+  navigator.mediaSession.metadata=new MediaMetadata({title,artist,album:'INSTATION',artwork:artworkArr});
+  navigator.mediaSession.playbackState='playing';
+
+  // 컨트롤 핸들러
+  navigator.mediaSession.setActionHandler('play',()=>{if(audio.paused){audio.play().catch(()=>{});setPlayIcon(true);startNowPlaying();startAutoSkipTimer()}});
+  navigator.mediaSession.setActionHandler('pause',()=>{audio.pause();setPlayIcon(false);stopNowPlaying()});
+  navigator.mediaSession.setActionHandler('nexttrack',()=>playNextChannel(false));
+  navigator.mediaSession.setActionHandler('previoustrack',()=>playPrevChannel());
+  navigator.mediaSession.setActionHandler('stop',()=>{audio.pause();setPlayIcon(false);stopNowPlaying()});
+}
+
+/* ── visibilitychange 처리 ── */
+let _wasPlayingBeforeHidden=false;
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){
+    // 화면 꺼질 때: 타이머 일시 중단 (스킵 방지)
+    _wasPlayingBeforeHidden=!audio.paused;
+    clearConnectTimer();
+    clearAutoSkipTimer();
+  } else {
+    // 화면 다시 켜질 때: 재생 중이었으면 스트림 상태 확인 후 복구
+    if(_wasPlayingBeforeHidden){
+      if(audio.paused||audio.readyState<2){
+        // 스트림이 끊겼으면 src 재설정 후 재생
+        const currentSrc=audio.src;
+        if(currentSrc){
+          audio.src=currentSrc;
+          audio.play().catch(()=>{});
+          startConnectTimer();
+        }
+      } else {
+        // 정상 재생 중이면 타이머만 재개
+        startAutoSkipTimer();
+      }
+    }
+  }
 });
 
 function getPort(id){return 10000+id*10}
@@ -1620,8 +1681,10 @@ async function pollNowPlaying(){
   lastTrackStr=trackStr;
   updateNowPlayingUI(meta.artist,meta.title,undefined);
   const art=await fetchAlbumArt(meta.artist,meta.title);
-  if(lastTrackStr===`${meta.artist}||${meta.title}`)
+  if(lastTrackStr===`${meta.artist}||${meta.title}`){
     updateNowPlayingUI(meta.artist,meta.title,art||null);
+    updateMediaSession();  // 트랙 변경 시 잠금화면 메타데이터 갱신
+  }
 }
 function startNowPlaying(){
   lastTrackStr='';currentArtUrl=null;
