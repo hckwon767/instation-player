@@ -79,11 +79,12 @@ html,body{
   transform:scale(1.2);
   opacity:0;
   transition:opacity 2.2s cubic-bezier(.4,0,.2,1);
-  will-change:opacity,transform;
+  will-change:opacity;
 }
 .bg-layer.active{
   opacity:1;
   animation:bgFloat 22s ease-in-out infinite alternate;
+  animation-delay:-2.2s; /* transition 길이만큼 딜레이 당겨서 transform 점프 방지 */
 }
 @keyframes bgFloat{
   from{transform:scale(1.2) translate(-10px,-14px)}
@@ -242,12 +243,13 @@ html,body{
   position:absolute;inset:0;
   background-size:cover;background-position:center;
   opacity:0;
-  transition:opacity 1.8s cubic-bezier(.4,0,.2,1);
+  transition:opacity 1.4s cubic-bezier(.4,0,.2,1);
   will-change:opacity;
 }
 .hero-img-a.active,.hero-img-b.active{
   opacity:1;
   animation:heroFloat 18s ease-in-out infinite alternate;
+  animation-delay:-1.4s;
 }
 @keyframes heroFloat{
   0%{
@@ -1915,57 +1917,74 @@ function forceLandscapeMarquee(){
   applyMarquee('mpTitleWrap','mpTitleInner','mpTitle', span.textContent);
 }
 
-/* ── hero update ── */
-let heroImgSlot='a';
-function setHeroImage(url){
-  const isA=heroImgSlot==='a';
-  const next=document.getElementById(isA?'heroImgB':'heroImgA');
-  const curr=document.getElementById(isA?'heroImgA':'heroImgB');
-  if(url){
-    next.style.backgroundImage=`url("${url}")`;
-    next.style.backgroundSize='cover';
-    next.style.backgroundPosition='center';
-  } else {
-    next.style.backgroundImage='none';
+/* ── 공통 crossfade 헬퍼 ──
+   next 레이어에 이미지를 preload한 뒤 active 전환.
+   url=null 이면 즉시 curr 제거(배경 없음 상태로). */
+function _crossfade(nextEl, currEl, url, onReady){
+  if(!url){
+    /* 이미지 없음 → 즉시 curr 숨기고 next도 빈 상태 */
+    nextEl.style.backgroundImage = 'none';
+    currEl.classList.remove('active');
+    nextEl.classList.remove('active');
+    if(onReady) onReady();
+    return;
   }
-  requestAnimationFrame(()=>{next.classList.add('active');curr.classList.remove('active')});
-  heroImgSlot=isA?'b':'a';
+  /* 이미지가 이미 캐시돼 있으면 load 이벤트 안 올 수 있으므로 Image() preload */
+  const tmp = new Image();
+  tmp.onload = () => {
+    nextEl.style.backgroundImage = `url("${url}")`;
+    /* 한 프레임 기다려 paint 완료 후 fade-in */
+    requestAnimationFrame(() => {
+      nextEl.classList.add('active');
+      currEl.classList.remove('active');
+      if(onReady) onReady();
+    });
+  };
+  tmp.onerror = () => {
+    /* 로드 실패 → 조용히 curr 유지 */
+    if(onReady) onReady();
+  };
+  tmp.src = url;
+}
+
+/* ── hero image ── */
+let heroImgSlot = 'a';
+function setHeroImage(url){
+  const isA = heroImgSlot === 'a';
+  const next = document.getElementById(isA ? 'heroImgB' : 'heroImgA');
+  const curr = document.getElementById(isA ? 'heroImgA' : 'heroImgB');
+  heroImgSlot = isA ? 'b' : 'a';
+  _crossfade(next, curr, url);
 }
 
 /* ── immersive bg ── */
-let bgSlot='a';
+let bgSlot = 'a';
 function setImmersiveBg(url){
-  const isA=bgSlot==='a';
-  const next=document.getElementById(isA?'bgB':'bgA');
-  const curr=document.getElementById(isA?'bgA':'bgB');
-  if(url){next.style.backgroundImage=`url("${url}")`}
-  else{next.style.backgroundImage='none'}
-  requestAnimationFrame(()=>{next.classList.add('active');curr.classList.remove('active')});
-  bgSlot=isA?'b':'a';
+  const isA = bgSlot === 'a';
+  const next = document.getElementById(isA ? 'bgB' : 'bgA');
+  const curr = document.getElementById(isA ? 'bgA' : 'bgB');
+  bgSlot = isA ? 'b' : 'a';
+  _crossfade(next, curr, url);
 }
 
 /* ── player pill bg ── */
-let ppSlot='a';
+let ppSlot = 'a';
 function setPpBg(url){
-  const isA=ppSlot==='a';
-  const next=document.getElementById(isA?'ppBgB':'ppBgA');
-  const curr=document.getElementById(isA?'ppBgA':'ppBgB');
-  if(url)next.style.backgroundImage=`url("${url}")`;
-  else next.style.backgroundImage='none';
-  requestAnimationFrame(()=>{next.classList.add('active');curr.classList.remove('active')});
-  ppSlot=isA?'b':'a';
+  const isA = ppSlot === 'a';
+  const next = document.getElementById(isA ? 'ppBgB' : 'ppBgA');
+  const curr = document.getElementById(isA ? 'ppBgA' : 'ppBgB');
+  ppSlot = isA ? 'b' : 'a';
+  _crossfade(next, curr, url);
 }
 
 /* ── mobile player bg ── */
-let mpSlot='a';
+let mpSlot = 'a';
 function setMpBg(url){
-  const isA=mpSlot==='a';
-  const next=document.getElementById(isA?'mpBgB':'mpBgA');
-  const curr=document.getElementById(isA?'mpBgA':'mpBgB');
-  if(url)next.style.backgroundImage=`url("${url}")`;
-  else next.style.backgroundImage='none';
-  requestAnimationFrame(()=>{next.classList.add('active');curr.classList.remove('active')});
-  mpSlot=isA?'b':'a';
+  const isA = mpSlot === 'a';
+  const next = document.getElementById(isA ? 'mpBgB' : 'mpBgA');
+  const curr = document.getElementById(isA ? 'mpBgA' : 'mpBgB');
+  mpSlot = isA ? 'b' : 'a';
+  _crossfade(next, curr, url);
 }
 
 /* ── show player pill ── */
@@ -2399,27 +2418,12 @@ function playExtraChannel(ch){
   (function applyBaseImg(){
     const tmp=new Image();
     tmp.onload=()=>{
-      /* 아직 같은 채널이 선택된 상태인지 확인 */
       const stillSame=activeExtraIdx!==null&&extraFiltered[activeExtraIdx]?.streamUrl===ch.streamUrl;
       if(!stillSame)return;
-      /* 앨범아트가 아직 없을 때만 배경에 적용 */
       if(!currentArtUrl){
+        /* _crossfade 는 내부에서 preload하므로, 이미 로드된 이미지라면 캐시에서 즉시 처리됨 */
         setHeroImage(tmp.src);
         setImmersiveBg(tmp.src);setPpBg(tmp.src);setMpBg(tmp.src);
-        /* pp/mp art placeholder 에도 블러 bg 적용 */
-        const ppArtEl=document.getElementById('ppArt');
-        const mpArtEl=document.getElementById('mpArt');
-        if(ppArtEl&&!ppArtEl.classList.contains('has-art')){
-          ppArtEl.style.backgroundImage=`url("${tmp.src}")`;
-          ppArtEl.style.backgroundSize='cover';
-          ppArtEl.style.backgroundPosition='center';
-          ppArtEl.style.filter='blur(0px)';
-        }
-        if(mpArtEl&&!mpArtEl.classList.contains('has-art')){
-          mpArtEl.style.backgroundImage=`url("${tmp.src}")`;
-          mpArtEl.style.backgroundSize='cover';
-          mpArtEl.style.backgroundPosition='center';
-        }
       }
     };
     tmp.src=baseImgUrl;
