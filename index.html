@@ -1235,7 +1235,7 @@ html,body{
   .mp-art-wrap{
     flex:0 0 auto;
     width:auto;
-    padding:12px 12px 12px 16px;
+    padding:10px 10px 10px 14px;
     aspect-ratio:1;
     height:100%;
     box-sizing:border-box;
@@ -1246,23 +1246,104 @@ html,body{
     height:100%;
     aspect-ratio:1;
   }
-  /* 오른쪽 정보+컨트롤 영역 */
+
+  /* 오른쪽 패널 래퍼 */
+  .mp-right{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    padding:20px 24px 14px;
+    overflow:hidden;
+  }
+
+  /* freq 숨김 */
+  .mp-right .mp-freq{
+    display:none;
+  }
+
+  /* 트랙 정보 — 위쪽, 가운데 정렬 */
   .mp-track{
-    padding:16px 0 4px;
+    margin-top: 12vh;
+    width:100%;
+    text-align:center;
+    padding:0;
     flex-shrink:0;
+    margin-bottom:auto;
   }
-  .mp-title{font-size:20px}
-  .mp-artist{font-size:13px}
-  .mp-cat{margin-bottom:6px}
-  .mp-freq{padding:0 0 6px}
+  .mp-cat{
+    text-align:center;
+    margin-bottom:14px;
+    font-size:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+
+  /* 제목 마퀴 — 항상 mask 적용 */
+  .mp-mq-title{
+    width:100%;
+    -webkit-mask-image:linear-gradient(to right,transparent 0,#000 5%,#000 95%,transparent 100%);
+    mask-image:linear-gradient(to right,transparent 0,#000 5%,#000 95%,transparent 100%);
+    overflow:hidden;
+  }
+  /* short 클래스 무력화 — 가로화면에서는 항상 마퀴 판정 허용 */
+  .mp-mq-title.short{
+    -webkit-mask-image:linear-gradient(to right,transparent 0,#000 5%,#000 95%,transparent 100%);
+    mask-image:linear-gradient(to right,transparent 0,#000 5%,#000 95%,transparent 100%);
+  }
+  .mp-mq-artist{
+    width:100%;
+    overflow:hidden;
+    -webkit-mask-image:linear-gradient(to right,transparent 0,#000 5%,#000 95%,transparent 100%);
+    mask-image:linear-gradient(to right,transparent 0,#000 5%,#000 95%,transparent 100%);
+  }
+  .mp-mq-artist.short{
+    -webkit-mask-image:none;
+    mask-image:none;
+  }
+
+  .mp-right{
+    --title-size:60px;
+  }
+  .mp-title{
+    font-size:var(--title-size);
+    font-weight:900;
+    letter-spacing:-1.5px;
+    line-height:1.1;
+    white-space:nowrap;
+  }
+  .mp-artist{
+    font-size:calc(var(--title-size) * 0.4);
+    margin-top:10px;
+    white-space:nowrap;
+  }
+
+  /* 컨트롤 묶음 — 아래쪽 고정, 가운데 정렬 */
   .mp-controls{
-    padding:4px 0 10px;
-    gap:16px;
+    justify-content:center;
+    padding:0;
+    gap:24px;
+    flex-shrink:0;
+    width:100%;
+    margin-top:auto;
   }
-  .mp-play{width:56px;height:56px}
-  .mp-play svg{width:20px;height:20px}
-  .mp-skip{width:38px;height:38px}
-  .mp-vol{padding:0 0 8px;gap:8px}
+  .mp-play{width:64px;height:64px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+  .mp-play svg{width:24px;height:24px}
+  .mp-skip{width:46px;height:46px}
+  .mp-skip svg{width:20px;height:20px}
+  .mp-vol{
+    justify-content:center;
+    padding:0;
+    gap:10px;
+    flex-shrink:0;
+    width:100%;
+    max-width:300px;
+    margin-top:12px;
+  }
 
   /* tabbar: 가로화면에서 오른쪽 세로 배치 */
   .tabbar{
@@ -1476,34 +1557,36 @@ audio{display:none}
       <div class="mp-art-wrap">
         <div class="mp-art" id="mpArt"><div class="mp-art-ph">🎵</div></div>
       </div>
-      <div class="mp-track">
-        <div class="mp-cat" id="mpCat">INSTATION</div>
-        <div class="mp-mq-title short" id="mpTitleWrap">
-          <div class="mp-mq-title-inner" id="mpTitleInner">
-            <span class="mp-title" id="mpTitle">채널을 선택하세요</span>
+      <div class="mp-right">
+        <div class="mp-track">
+          <div class="mp-cat" id="mpCat">INSTATION</div>
+          <div class="mp-mq-title short" id="mpTitleWrap">
+            <div class="mp-mq-title-inner" id="mpTitleInner">
+              <span class="mp-title" id="mpTitle">채널을 선택하세요</span>
+            </div>
+          </div>
+          <div class="mp-mq-artist short" id="mpArtistWrap">
+            <div class="mp-mq-artist-inner" id="mpArtistInner">
+              <span class="mp-artist" id="mpArtist"></span>
+            </div>
           </div>
         </div>
-        <div class="mp-mq-artist short" id="mpArtistWrap">
-          <div class="mp-mq-artist-inner" id="mpArtistInner">
-            <span class="mp-artist" id="mpArtist"></span>
-          </div>
+        <div class="mp-freq" id="mpFreq"></div>
+        <div class="mp-controls">
+          <button class="mp-skip" onclick="playPrevChannel()">
+            <svg viewBox="0 0 24 24"><polyline points="19 20 9 12 19 4"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+          </button>
+          <button class="mp-play" id="mpPlayBtn" onclick="togglePlay()">
+            <svg viewBox="0 0 24 24" fill="#000"><polygon points="5,3 19,12 5,21"/></svg>
+          </button>
+          <button class="mp-skip" onclick="playNextChannel(false)">
+            <svg viewBox="0 0 24 24"><polyline points="5 4 15 12 5 20"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+          </button>
         </div>
-      </div>
-      <div class="mp-freq" id="mpFreq"></div>
-      <div class="mp-controls">
-        <button class="mp-skip" onclick="playPrevChannel()">
-          <svg viewBox="0 0 24 24"><polyline points="19 20 9 12 19 4"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
-        </button>
-        <button class="mp-play" id="mpPlayBtn" onclick="togglePlay()">
-          <svg viewBox="0 0 24 24" fill="#000"><polygon points="5,3 19,12 5,21"/></svg>
-        </button>
-        <button class="mp-skip" onclick="playNextChannel(false)">
-          <svg viewBox="0 0 24 24"><polyline points="5 4 15 12 5 20"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
-        </button>
-      </div>
-      <div class="mp-vol">
-        <button class="mp-vol-btn" onclick="toggleMute()" id="mpVolBtn">🔊</button>
-        <input type="range" min="0" max="1" step="0.01" value="1" class="mp-vol-slider" id="mpVolSlider" oninput="setVolume(this.value)">
+        <div class="mp-vol">
+          <button class="mp-vol-btn" onclick="toggleMute()" id="mpVolBtn">🔊</button>
+          <input type="range" min="0" max="1" step="0.01" value="1" class="mp-vol-slider" id="mpVolSlider" oninput="setVolume(this.value)">
+        </div>
       </div>
     </div>
   </div>
@@ -1750,6 +1833,32 @@ function applyMarquee(wrapId,innerId,spanId,text){
   });
 }
 
+/* ── 가로화면 전용: mpTitle 마퀴 강제 실행 ── */
+function forceLandscapeMarquee(){
+  const isLandscape=window.matchMedia(
+    '(max-height:680px) and (orientation:landscape) and (max-width:960px)'
+  ).matches;
+  if(!isLandscape)return;
+  /* mpTitleWrap — short 클래스 제거 후 폭 재판정 */
+  const wrap=document.getElementById('mpTitleWrap');
+  const inner=document.getElementById('mpTitleInner');
+  const span=document.getElementById('mpTitle');
+  if(!wrap||!inner||!span||!span.textContent.trim()||span.textContent==='–')return;
+  inner.querySelectorAll('.mq-clone').forEach(c=>c.remove());
+  wrap.classList.remove('scrolling','short');
+  requestAnimationFrame(()=>{
+    const cW=wrap.offsetWidth, tW=span.offsetWidth;
+    if(tW<=cW){wrap.classList.add('short');return}
+    const gap=80;
+    const clone=span.cloneNode(true);clone.classList.add('mq-clone');clone.style.paddingLeft=gap+'px';
+    inner.appendChild(clone);
+    const total=tW+gap;
+    inner.style.setProperty('--mq-dist',`-${total}px`);
+    inner.style.setProperty('--mq-dur',`${total/55}s`);
+    wrap.classList.add('scrolling');
+  });
+}
+
 /* ── hero update ── */
 let heroImgSlot='a';
 function setHeroImage(url){
@@ -1847,6 +1956,7 @@ function playChannel(ch){
   document.getElementById('mpFreq').textContent=freq;
   applyMarquee('mpTitleWrap','mpTitleInner','mpTitle','–');
   applyMarquee('mpArtistWrap','mpArtistInner','mpArtist','');
+  requestAnimationFrame(forceLandscapeMarquee);
   const mpArt=document.getElementById('mpArt');
   mpArt.innerHTML='<div class="mp-art-ph">🎵</div>';mpArt.classList.remove('has-art');
   setMpBg(imgSrc);
@@ -2220,6 +2330,7 @@ function playExtraChannel(ch){
   document.getElementById('mpFreq').textContent='EXTRA';
   applyMarquee('mpTitleWrap','mpTitleInner','mpTitle',name);
   applyMarquee('mpArtistWrap','mpArtistInner','mpArtist',ch.tag);
+  requestAnimationFrame(forceLandscapeMarquee);
   const mpArt=document.getElementById('mpArt');
   mpArt.innerHTML='<div class="mp-art-ph">📻</div>';mpArt.classList.remove('has-art');
   setMpBg(null);
@@ -2352,6 +2463,8 @@ function updateNowPlayingUI(artist,title,artUrl,loading=false){
   /* mobile player — 제목 / 아티스트 분리 */
   applyMarquee('mpTitleWrap','mpTitleInner','mpTitle',title||'–');
   applyMarquee('mpArtistWrap','mpArtistInner','mpArtist',artist||'');
+  /* 가로화면에서 폰트 크기가 커서 재판정 필요 */
+  requestAnimationFrame(forceLandscapeMarquee);
 
   /* hero — 제목을 heroTitle로, 아티스트를 heroMeta로 */
   const hTitle=document.getElementById('heroTitle');
