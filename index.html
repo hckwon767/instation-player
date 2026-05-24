@@ -709,21 +709,16 @@ html,body{
 .pp-marquee-wrap.scrolling .pp-marquee-inner {
   display: inline-block;
   white-space: nowrap;
-  will-change: transform; /* GPU 가속 활성화 */
-  transform: translate3d(0, 0, 0); /* 3D 레이어 격리 */
+  will-change: transform;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   animation: mqScroll var(--mq-dur, 12s) linear infinite;
 }
 
-/* 0%에서 50%까지만 이동하는 대칭형 무한 루프로 수정 */
+/* animation-play-state 를 쓰지 않고 클래스 탈부착으로 재시작 → 깜빡임 없음 */
 @keyframes mqScroll {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-50%, 0, 0); /* 복제본과 원본의 위치가 완전히 일치하는 절반 시점에서 루프 */
-  }
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
 }
 .pp-title{font-size:17px;font-weight:700;letter-spacing:-.4px;color:#fff}
 .pp-artist{font-size:13px;color:var(--text3);margin-top:2px;display:block}
@@ -1829,81 +1824,81 @@ function setPlayIcon(playing){
 }
 
 /* ── marquee ── */
+/* 각 wrap 별로 대기 중인 타이머 ID를 보관 */
+const _mqTimers = {};
+
 function applyMarquee(wrapId, innerId, spanId, text){
   const wrap = document.getElementById(wrapId);
   const inner = document.getElementById(innerId);
   const span = document.getElementById(spanId);
   if(!wrap || !inner || !span) return;
-  
+
+  /* 이전에 대기 중이던 측정 요청 취소 */
+  if(_mqTimers[wrapId]) { clearTimeout(_mqTimers[wrapId]); delete _mqTimers[wrapId]; }
+
+  /* ── 텍스트만 교체, 애니메이션은 아직 건드리지 않음 (깜빡임 방지) ── */
   span.textContent = text;
-  
-  // 기존 클론 일괄 삭제
-  inner.querySelectorAll('.mq-clone').forEach(c => c.remove());
-  wrap.classList.remove('scrolling');
-  wrap.classList.add('short'); // 일단 기본 상태로 리셋
-  
+
+  /* 레이아웃이 완전히 안정된 뒤 측정 (double-rAF + 추가 16ms) */
   requestAnimationFrame(() => {
-    const cW = wrap.offsetWidth;
-    const tW = span.offsetWidth;
-    
-    // 텍스트가 wrap 영역보다 짧으면 마퀴 미실행
-    if(tW <= cW) return;
-    
-    // 자연스러운 공백 간격 (Apple Music 스타일)
-    const gap = 60; 
-    span.style.paddingRight = gap + 'px';
-    
-    // 완전히 동일한 구조의 클론을 생성하여 무한 루프 대칭을 맞춤
-    const clone = span.cloneNode(true);
-    clone.classList.add('mq-clone');
-    inner.appendChild(clone);
-    
-    // 전체 움직여야 할 실제 텍스트+공백 폭 계산
-    const totalDistance = tW + gap;
-    
-    // 고정된 속도(예: 초당 40픽셀)로 흐르도록 듀레이션(초) 계산
-    const speed = 40; 
-    const duration = totalDistance / speed;
-    
-    // CSS 가속용 변수 세팅 (더 이상 -var px 연산을 하지 않고 무조건 -50%로 가속 처리)
-    inner.style.setProperty('--mq-dur', `${duration}s`);
-    
-    wrap.classList.remove('short');
-    wrap.classList.add('scrolling'); // 애니메이션 시작
+    requestAnimationFrame(() => {
+      _mqTimers[wrapId] = setTimeout(() => {
+        delete _mqTimers[wrapId];
+        _applyMarqueeNow(wrap, inner, span);
+      }, 16);
+    });
   });
 }
 
-/* ── 가로화면 전용 마퀴 함수도 동일한 메커니즘으로 수정 ── */
+function _applyMarqueeNow(wrap, inner, span){
+  /* 클론 제거 및 상태 리셋 */
+  inner.querySelectorAll('.mq-clone').forEach(c => c.remove());
+  span.style.paddingRight = '';
+
+  const cW = wrap.offsetWidth;
+  const tW = span.scrollWidth; /* scrollWidth: 잘린 경우에도 실제 폭 반환 */
+
+  if(tW <= cW || cW === 0){
+    /* 짧은 텍스트 — 스크롤 불필요 */
+    wrap.classList.remove('scrolling');
+    wrap.classList.add('short');
+    return;
+  }
+
+  const gap = 60;
+  span.style.paddingRight = gap + 'px';
+
+  const clone = span.cloneNode(true);
+  clone.classList.add('mq-clone');
+  inner.appendChild(clone);
+
+  const totalDistance = tW + gap;
+  const speed = 40;
+  const duration = totalDistance / speed;
+
+  inner.style.setProperty('--mq-dur', `${duration}s`);
+
+  /* 애니메이션을 재시작하기 위해 잠깐 제거 후 재적용 */
+  wrap.classList.remove('scrolling', 'short');
+  /* 강제 reflow 없이 다음 프레임에서 클래스 추가 → 깜빡임 없이 재시작 */
+  requestAnimationFrame(() => wrap.classList.add('scrolling'));
+}
+
+/* ── 가로화면 전용 마퀴 함수 ── */
 function forceLandscapeMarquee(){
-  const isLandscape = window.matchMedia( '(max-height:680px) and (orientation:landscape) and (max-width:960px)' ).matches;
+  const isLandscape = window.matchMedia('(max-height:680px) and (orientation:landscape) and (max-width:960px)').matches;
   if(!isLandscape) return;
-  
+
   const wrap = document.getElementById('mpTitleWrap');
   const inner = document.getElementById('mpTitleInner');
   const span = document.getElementById('mpTitle');
   if(!wrap || !inner || !span || !span.textContent.trim() || span.textContent === '–') return;
-  
-  inner.querySelectorAll('.mq-clone').forEach(c => c.remove());
-  wrap.classList.remove('scrolling', 'short');
-  
+
+  /* applyMarquee와 동일한 안정화 타이밍으로 측정 */
   requestAnimationFrame(() => {
-    const cW = wrap.offsetWidth;
-    const tW = span.offsetWidth;
-    if(tW <= cW){ wrap.classList.add('short'); return; }
-    
-    const gap = 60;
-    span.style.paddingRight = gap + 'px';
-    
-    const clone = span.cloneNode(true);
-    clone.classList.add('mq-clone');
-    inner.appendChild(clone);
-    
-    const totalDistance = tW + gap;
-    const speed = 40;
-    const duration = totalDistance / speed;
-    
-    inner.style.setProperty('--mq-dur', `${duration}s`);
-    wrap.classList.add('scrolling');
+    requestAnimationFrame(() => {
+      setTimeout(() => _applyMarqueeNow(wrap, inner, span), 16);
+    });
   });
 }
 
@@ -2004,7 +1999,7 @@ function playChannel(ch){
   document.getElementById('mpFreq').textContent=freq;
   applyMarquee('mpTitleWrap','mpTitleInner','mpTitle','–');
   applyMarquee('mpArtistWrap','mpArtistInner','mpArtist','');
-  requestAnimationFrame(forceLandscapeMarquee);
+  forceLandscapeMarquee();
   const mpArt=document.getElementById('mpArt');
   mpArt.innerHTML='<div class="mp-art-ph">🎵</div>';mpArt.classList.remove('has-art');
   setMpBg(imgSrc);
@@ -2511,8 +2506,8 @@ function updateNowPlayingUI(artist,title,artUrl,loading=false){
   /* mobile player — 제목 / 아티스트 분리 */
   applyMarquee('mpTitleWrap','mpTitleInner','mpTitle',title||'–');
   applyMarquee('mpArtistWrap','mpArtistInner','mpArtist',artist||'');
-  /* 가로화면에서 폰트 크기가 커서 재판정 필요 */
-  requestAnimationFrame(forceLandscapeMarquee);
+  /* 가로화면에서 폰트 크기가 커서 재판정 필요 (applyMarquee 내부 타이밍 후 실행) */
+  forceLandscapeMarquee();
 
   /* hero — 제목을 heroTitle로, 아티스트를 heroMeta로 */
   const hTitle=document.getElementById('heroTitle');
