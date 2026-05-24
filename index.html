@@ -676,6 +676,7 @@ html,body{
 }
 .pp-art img{width:100%;height:100%;object-fit:cover;display:block}
 .pp-art-ph{
+  position:absolute;inset:0;
   width:100%;height:100%;
   display:flex;align-items:center;justify-content:center;
   font-size:22px;opacity:.4;
@@ -700,25 +701,24 @@ html,body{
 }
 .pp-marquee-wrap{
   overflow:hidden;
-  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 2%,#000 94%,transparent 100%);
-  mask-image:linear-gradient(to right,transparent 0,#000 2%,#000 94%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 3%,#000 93%,transparent 100%);
+  mask-image:linear-gradient(to right,transparent 0,#000 3%,#000 93%,transparent 100%);
+  contain:layout style;
 }
 .pp-marquee-wrap.short{-webkit-mask-image:none;mask-image:none}
-.pp-marquee-inner{display:inline-block;white-space:nowrap}
-/* 기존 마퀴 CSS 영역을 아래와 같이 수정 */
-.pp-marquee-wrap.scrolling .pp-marquee-inner {
-  display: inline-block;
-  white-space: nowrap;
-  will-change: transform;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  animation: mqScroll var(--mq-dur, 12s) linear infinite;
+.pp-marquee-inner{
+  display:inline-flex; /* flex로 변경 → 자식 span width 정확히 반영 */
+  white-space:nowrap;
+  will-change:transform;
+  -webkit-backface-visibility:hidden;
+  backface-visibility:hidden;
 }
-
-/* animation-play-state 를 쓰지 않고 클래스 탈부착으로 재시작 → 깜빡임 없음 */
-@keyframes mqScroll {
-  0%   { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-50%, 0, 0); }
+.pp-marquee-inner.running{
+  animation:mqScroll var(--mq-dur,14s) linear infinite;
+}
+@keyframes mqScroll{
+  0%  {transform:translate3d(0,0,0)}
+  100%{transform:translate3d(var(--mq-dist,0px),0,0)}
 }
 .pp-title{font-size:17px;font-weight:700;letter-spacing:-.4px;color:#fff}
 .pp-artist{font-size:13px;color:var(--text3);margin-top:2px;display:block}
@@ -1033,7 +1033,7 @@ html,body{
   animation:
     mobileArtFloat 24s cubic-bezier(.45,.05,.55,.95) infinite alternate;
 }
-.mp-art-ph{font-size:52px;opacity:.18}
+.mp-art-ph{font-size:52px;opacity:.18;position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
 .mp-art.has-art{
   box-shadow:0 36px 90px rgba(0,0,0,.75),0 0 60px rgba(255,55,95,.12),0 0 0 1px rgba(255,255,255,.1);
 }
@@ -1056,22 +1056,23 @@ html,body{
 }
 .mp-mq-title{
   overflow:hidden;
-  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 2%,#000 94%,transparent 100%);
-  mask-image:linear-gradient(to right,transparent 0,#000 2%,#000 94%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 3%,#000 93%,transparent 100%);
+  mask-image:linear-gradient(to right,transparent 0,#000 3%,#000 93%,transparent 100%);
+  contain:layout style;
 }
 .mp-mq-title.short{-webkit-mask-image:none;mask-image:none}
-.mp-mq-title-inner{display:inline-block;white-space:nowrap}
-.mp-mq-title.scrolling .mp-mq-title-inner{animation:mqScroll var(--mq-dur,12s) linear infinite}
-.mp-title{font-size:28px;font-weight:900;letter-spacing:-1.2px;color:#fff;line-height:1.1}
+.mp-mq-title-inner{display:inline-flex;white-space:nowrap;will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.mp-mq-title-inner.running{animation:mqScroll var(--mq-dur,14s) linear infinite}
 
 .mp-mq-artist{
   overflow:hidden;margin-top:5px;
-  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 2%,#000 94%,transparent 100%);
-  mask-image:linear-gradient(to right,transparent 0,#000 2%,#000 94%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 3%,#000 93%,transparent 100%);
+  mask-image:linear-gradient(to right,transparent 0,#000 3%,#000 93%,transparent 100%);
+  contain:layout style;
 }
 .mp-mq-artist.short{-webkit-mask-image:none;mask-image:none}
-.mp-mq-artist-inner{display:inline-block;white-space:nowrap}
-.mp-mq-artist.scrolling .mp-mq-artist-inner{animation:mqScroll var(--mq-dur,12s) linear infinite}
+.mp-mq-artist-inner{display:inline-flex;white-space:nowrap;will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.mp-mq-artist-inner.running{animation:mqScroll var(--mq-dur,14s) linear infinite}
 .mp-artist{font-size:15px;color:var(--text3);font-style:italic}
 
 /* freq */
@@ -1823,83 +1824,95 @@ function setPlayIcon(playing){
     :'<svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><polygon points="5,3 19,12 5,21"/></svg> 지금 재생');
 }
 
+/* ── art element reset (innerHTML 대신 부드럽게 초기화) ── */
+function resetArtEl(el, phClass){
+  if(!el) return;
+  /* 기존 img fade-out 후 제거 */
+  [...el.querySelectorAll('img')].forEach(img=>{
+    img.style.transition='opacity .25s ease';
+    img.style.opacity='0';
+    setTimeout(()=>img.remove(), 260);
+  });
+  el.classList.remove('has-art');
+  if(!el.querySelector('.'+phClass)){
+    const ph=document.createElement('div');
+    ph.className=phClass;
+    ph.textContent='🎵';
+    el.appendChild(ph);
+  }
+}
+
 /* ── marquee ── */
-/* 각 wrap 별로 대기 중인 타이머 ID를 보관 */
 const _mqTimers = {};
 
 function applyMarquee(wrapId, innerId, spanId, text){
-  const wrap = document.getElementById(wrapId);
+  const wrap  = document.getElementById(wrapId);
   const inner = document.getElementById(innerId);
-  const span = document.getElementById(spanId);
+  const span  = document.getElementById(spanId);
   if(!wrap || !inner || !span) return;
 
-  /* 이전에 대기 중이던 측정 요청 취소 */
-  if(_mqTimers[wrapId]) { clearTimeout(_mqTimers[wrapId]); delete _mqTimers[wrapId]; }
+  /* 진행 중인 측정 취소 */
+  if(_mqTimers[wrapId]){ clearTimeout(_mqTimers[wrapId]); delete _mqTimers[wrapId]; }
 
-  /* ── 텍스트만 교체, 애니메이션은 아직 건드리지 않음 (깜빡임 방지) ── */
-  span.textContent = text;
-
-  /* 레이아웃이 완전히 안정된 뒤 측정 (double-rAF + 추가 16ms) */
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      _mqTimers[wrapId] = setTimeout(() => {
-        delete _mqTimers[wrapId];
-        _applyMarqueeNow(wrap, inner, span);
-      }, 16);
-    });
-  });
-}
-
-function _applyMarqueeNow(wrap, inner, span){
-  /* 클론 제거 및 상태 리셋 */
+  /* 1) 애니메이션 즉시 중단 → 텍스트 교체 → 클론 제거 */
+  inner.classList.remove('running');
   inner.querySelectorAll('.mq-clone').forEach(c => c.remove());
   span.style.paddingRight = '';
+  span.textContent = text;
 
-  const cW = wrap.offsetWidth;
-  const tW = span.scrollWidth; /* scrollWidth: 잘린 경우에도 실제 폭 반환 */
+  /* 2) 짧은 텍스트면 short 표시 후 종료 */
+  wrap.classList.add('short');
 
-  if(tW <= cW || cW === 0){
-    /* 짧은 텍스트 — 스크롤 불필요 */
-    wrap.classList.remove('scrolling');
-    wrap.classList.add('short');
-    return;
-  }
+  /* 3) 레이아웃 안정 후 실제 폭 측정 */
+  _mqTimers[wrapId] = setTimeout(() => {
+    delete _mqTimers[wrapId];
 
-  const gap = 60;
-  span.style.paddingRight = gap + 'px';
+    /* wrap을 잠시 clip 해제해서 실제 span 폭을 측정 */
+    const prevOverflow = wrap.style.overflow;
+    wrap.style.overflow = 'visible';
+    const spanW = span.getBoundingClientRect().width;
+    const wrapW = wrap.getBoundingClientRect().width;
+    wrap.style.overflow = prevOverflow || '';
 
-  const clone = span.cloneNode(true);
-  clone.classList.add('mq-clone');
-  inner.appendChild(clone);
+    if(spanW <= wrapW + 1 || wrapW === 0){
+      /* 충분히 짧음 — short 유지 */
+      return;
+    }
 
-  const totalDistance = tW + gap;
-  const speed = 40;
-  const duration = totalDistance / speed;
+    /* 4) 스크롤 필요 → 클론 추가, px 거리 계산 */
+    const gap = 64;
+    span.style.paddingRight = gap + 'px';
 
-  inner.style.setProperty('--mq-dur', `${duration}s`);
+    const clone = span.cloneNode(true);
+    clone.classList.add('mq-clone');
+    inner.appendChild(clone);
 
-  /* 애니메이션을 재시작하기 위해 잠깐 제거 후 재적용 */
-  wrap.classList.remove('scrolling', 'short');
-  /* 강제 reflow 없이 다음 프레임에서 클래스 추가 → 깜빡임 없이 재시작 */
-  requestAnimationFrame(() => wrap.classList.add('scrolling'));
+    /* 이동 거리 = 원본 span 폭(paddingRight 포함) */
+    const dist = spanW + gap;
+    const speed = 45; /* px/s */
+    const dur   = dist / speed;
+
+    inner.style.setProperty('--mq-dist', `-${dist}px`);
+    inner.style.setProperty('--mq-dur',  `${dur}s`);
+
+    /* mask 적용 */
+    wrap.classList.remove('short');
+
+    /* 다음 프레임에 running 추가 → animation 새로 시작 */
+    requestAnimationFrame(() => inner.classList.add('running'));
+
+  }, 60); /* 60ms: 폰트·레이아웃 안정 대기 */
 }
 
-/* ── 가로화면 전용 마퀴 함수 ── */
+/* 가로화면 전용: mpTitleWrap 재측정 */
 function forceLandscapeMarquee(){
-  const isLandscape = window.matchMedia('(max-height:680px) and (orientation:landscape) and (max-width:960px)').matches;
+  const isLandscape = window.matchMedia(
+    '(max-height:680px) and (orientation:landscape) and (max-width:960px)'
+  ).matches;
   if(!isLandscape) return;
-
-  const wrap = document.getElementById('mpTitleWrap');
-  const inner = document.getElementById('mpTitleInner');
   const span = document.getElementById('mpTitle');
-  if(!wrap || !inner || !span || !span.textContent.trim() || span.textContent === '–') return;
-
-  /* applyMarquee와 동일한 안정화 타이밍으로 측정 */
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      setTimeout(() => _applyMarqueeNow(wrap, inner, span), 16);
-    });
-  });
+  if(!span || !span.textContent.trim() || span.textContent === '–') return;
+  applyMarquee('mpTitleWrap','mpTitleInner','mpTitle', span.textContent);
 }
 
 /* ── hero update ── */
@@ -1991,7 +2004,7 @@ function playChannel(ch){
   applyMarquee('ppTitleWrap','ppTitleInner','ppTitle','–');
   applyMarquee('ppArtistWrap','ppArtistInner','ppArtist','');
   const ppArt=document.getElementById('ppArt');
-  ppArt.innerHTML='<div class="pp-art-ph">🎵</div>';ppArt.classList.remove('has-art');
+  resetArtEl(ppArt,'pp-art-ph');
   setPpBg(imgSrc);showPlayer();
 
   /* mobile player */
@@ -2001,7 +2014,7 @@ function playChannel(ch){
   applyMarquee('mpArtistWrap','mpArtistInner','mpArtist','');
   forceLandscapeMarquee();
   const mpArt=document.getElementById('mpArt');
-  mpArt.innerHTML='<div class="mp-art-ph">🎵</div>';mpArt.classList.remove('has-art');
+  resetArtEl(mpArt,'mp-art-ph');
   setMpBg(imgSrc);
 
   /* state */
@@ -2365,7 +2378,7 @@ function playExtraChannel(ch){
   applyMarquee('ppTitleWrap','ppTitleInner','ppTitle',name);
   applyMarquee('ppArtistWrap','ppArtistInner','ppArtist',ch.tag);
   const ppArt=document.getElementById('ppArt');
-  ppArt.innerHTML='<div class="pp-art-ph">📻</div>';ppArt.classList.remove('has-art');
+  resetArtEl(ppArt,'pp-art-ph');
   setPpBg(null);showPlayer();
 
   /* mobile player */
@@ -2373,9 +2386,9 @@ function playExtraChannel(ch){
   document.getElementById('mpFreq').textContent='EXTRA';
   applyMarquee('mpTitleWrap','mpTitleInner','mpTitle',name);
   applyMarquee('mpArtistWrap','mpArtistInner','mpArtist',ch.tag);
-  requestAnimationFrame(forceLandscapeMarquee);
+  forceLandscapeMarquee();
   const mpArt=document.getElementById('mpArt');
-  mpArt.innerHTML='<div class="mp-art-ph">📻</div>';mpArt.classList.remove('has-art');
+  resetArtEl(mpArt,'mp-art-ph');
   setMpBg(null);
 
   setPlayIcon(true);setOnAir(false);
@@ -2528,26 +2541,43 @@ function updateNowPlayingUI(artist,title,artUrl,loading=false){
   _artImgs=[];
 
   if(artUrl){
-    /* pp art */
+    /* pp art — crossfade: 새 img를 opacity:0으로 먼저 넣고 load 후 fade-in */
     if(ppArtEl){
       const img=new Image();_artImgs.push(img);
       img.alt=title||'';
-      img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';
+      img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .5s ease';
       img.onload=()=>{
-        ppArtEl.style.backgroundImage='';ppArtEl.style.filter='';
-        ppArtEl.innerHTML='';ppArtEl.appendChild(img);ppArtEl.classList.add('has-art')};
-      img.onerror=()=>{ppArtEl.innerHTML='<div class="pp-art-ph">🎵</div>';ppArtEl.classList.remove('has-art')};
+        /* 기존 img들 제거 후 새 img fade-in */
+        [...ppArtEl.querySelectorAll('img')].forEach(old=>old.remove());
+        ppArtEl.querySelector('.pp-art-ph')?.remove();
+        ppArtEl.appendChild(img);
+        ppArtEl.classList.add('has-art');
+        requestAnimationFrame(()=>{ img.style.opacity='1'; });
+      };
+      img.onerror=()=>{ resetArtEl(ppArtEl,'pp-art-ph'); };
       img.src=artUrl;
     }
-    /* mp art */
+    /* mp art — 동일 crossfade */
     if(mpArtEl){
       const img2=new Image();_artImgs.push(img2);
       img2.alt=title||'';
-      img2.style.cssText='width:100%;height:100%;object-fit:cover;display:block';
+      /* position:absolute + inset:0 으로 배치, opacity transition은 인라인으로 */
+      img2.style.position='absolute';
+      img2.style.inset='0';
+      img2.style.width='100%';
+      img2.style.height='100%';
+      img2.style.objectFit='cover';
+      img2.style.display='block';
+      img2.style.opacity='0';
+      img2.style.transition='opacity .5s ease';
       img2.onload=()=>{
-        mpArtEl.style.backgroundImage='';
-        mpArtEl.innerHTML='';mpArtEl.appendChild(img2);mpArtEl.classList.add('has-art')};
-      img2.onerror=()=>{mpArtEl.innerHTML='<div class="mp-art-ph">🎵</div>';mpArtEl.classList.remove('has-art')};
+        [...mpArtEl.querySelectorAll('img')].forEach(old=>old.remove());
+        mpArtEl.querySelector('.mp-art-ph')?.remove();
+        mpArtEl.appendChild(img2);
+        mpArtEl.classList.add('has-art');
+        requestAnimationFrame(()=>{ img2.style.opacity='1'; });
+      };
+      img2.onerror=()=>{ resetArtEl(mpArtEl,'mp-art-ph'); };
       img2.src=artUrl;
     }
     /* 배경 + hero 이미지 */
@@ -2555,8 +2585,8 @@ function updateNowPlayingUI(artist,title,artUrl,loading=false){
     setImmersiveBg(artUrl);setPpBg(artUrl);setMpBg(artUrl);
     currentArtUrl=artUrl;
   } else {
-    if(ppArtEl){ppArtEl.innerHTML='<div class="pp-art-ph">🎵</div>';ppArtEl.classList.remove('has-art')}
-    if(mpArtEl){mpArtEl.innerHTML='<div class="mp-art-ph">🎵</div>';mpArtEl.classList.remove('has-art')}
+    resetArtEl(ppArtEl,'pp-art-ph');
+    resetArtEl(mpArtEl,'mp-art-ph');
     setImmersiveBg(null);setPpBg(null);setMpBg(null);currentArtUrl=null;
   }
 }
@@ -2600,8 +2630,8 @@ function stopNowPlaying(){
   if(npTimer){clearInterval(npTimer);npTimer=null}
   clearAutoSkip();setOnAir(false);
   const ppA=document.getElementById('ppArt'),mpA=document.getElementById('mpArt');
-  if(ppA){ppA.innerHTML='<div class="pp-art-ph">🎵</div>';ppA.classList.remove('has-art')}
-  if(mpA){mpA.innerHTML='<div class="mp-art-ph">🎵</div>';mpA.classList.remove('has-art')}
+  resetArtEl(ppA,'pp-art-ph');
+  resetArtEl(mpA,'mp-art-ph');
   applyMarquee('ppTitleWrap','ppTitleInner','ppTitle','–');
   applyMarquee('ppArtistWrap','ppArtistInner','ppArtist','');
   applyMarquee('mpTitleWrap','mpTitleInner','mpTitle','–');
