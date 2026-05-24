@@ -1861,6 +1861,23 @@ function forceLandscapeMarquee(){
 
 /* ── hero update ── */
 let heroImgSlot='a';
+/* 슬롯을 소비하지 않고 현재 슬롯에만 이미지를 예약하는 내부 헬퍼.
+   채널 선택 직후 채널 썸네일을 넣을 때 사용 — NowPlaying 아트가
+   아직 로드되지 않은 상태에서 슬롯이 미리 소비되는 것을 방지한다. */
+function _setHeroImageNoSlot(url){
+  const isA=heroImgSlot==='a';
+  const curr=document.getElementById(isA?'heroImgA':'heroImgB');
+  const other=document.getElementById(isA?'heroImgB':'heroImgA');
+  if(url){
+    curr.style.backgroundImage=`url("${url}")`;
+    curr.style.backgroundSize='cover';
+    curr.style.backgroundPosition='center';
+  } else {
+    curr.style.backgroundImage='none';
+  }
+  requestAnimationFrame(()=>{curr.classList.add('active');other.classList.remove('active')});
+  /* heroImgSlot 변경 없음 */
+}
 function setHeroImage(url){
   const isA=heroImgSlot==='a';
   const next=document.getElementById(isA?'heroImgB':'heroImgA');
@@ -1938,7 +1955,7 @@ function playChannel(ch){
   document.getElementById('heroOverlineText').textContent='NOW PLAYING · '+ch.cat;
   const catB=document.getElementById('heroCatBadge');
   if(catB){catB.textContent=ch.cat;catB.style.display=''}
-  setHeroImage(imgSrc);
+  _setHeroImageNoSlot(imgSrc);
   const badge=document.getElementById('heroBadge');
   if(badge){document.getElementById('heroBadgeFreq').textContent=freq;badge.classList.add('visible')}
 
@@ -2312,7 +2329,7 @@ function playExtraChannel(ch){
   document.getElementById('heroOverlineText').textContent='EXTRA · '+ch.tag;
   const catB=document.getElementById('heroCatBadge');
   if(catB){catB.textContent=ch.tag;catB.style.display=''}
-  setHeroImage(null);
+  _setHeroImageNoSlot(null);
   const badge=document.getElementById('heroBadge');
   if(badge){document.getElementById('heroBadgeFreq').textContent='EXTRA';badge.classList.add('visible')}
 
@@ -2481,7 +2498,7 @@ function updateNowPlayingUI(artist,title,artUrl,loading=false){
   if(artUrl===undefined)return;
 
   /* album art */
-  _artImgs.forEach(img=>{img.onload=null;img.onerror=null;img.src=''});
+  _artImgs.forEach(img=>{img.src='';img.onload=null;img.onerror=null;});
   _artImgs=[];
 
   if(artUrl){
@@ -2491,9 +2508,11 @@ function updateNowPlayingUI(artist,title,artUrl,loading=false){
       img.alt=title||'';
       img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';
       img.onload=()=>{
-        ppArtEl.style.backgroundImage='';ppArtEl.style.filter='';
+        ppArtEl.style.backgroundImage='';ppArtEl.style.backgroundSize='';ppArtEl.style.backgroundPosition='';ppArtEl.style.filter='';
         ppArtEl.innerHTML='';ppArtEl.appendChild(img);ppArtEl.classList.add('has-art')};
-      img.onerror=()=>{ppArtEl.innerHTML='<div class="pp-art-ph">🎵</div>';ppArtEl.classList.remove('has-art')};
+      img.onerror=()=>{
+        ppArtEl.style.backgroundImage='';ppArtEl.style.backgroundSize='';ppArtEl.style.backgroundPosition='';ppArtEl.style.filter='';
+        ppArtEl.innerHTML='<div class="pp-art-ph">🎵</div>';ppArtEl.classList.remove('has-art')};
       img.src=artUrl;
     }
     /* mp art */
@@ -2502,9 +2521,11 @@ function updateNowPlayingUI(artist,title,artUrl,loading=false){
       img2.alt=title||'';
       img2.style.cssText='width:100%;height:100%;object-fit:cover;display:block';
       img2.onload=()=>{
-        mpArtEl.style.backgroundImage='';
+        mpArtEl.style.backgroundImage='';mpArtEl.style.backgroundSize='';mpArtEl.style.backgroundPosition='';
         mpArtEl.innerHTML='';mpArtEl.appendChild(img2);mpArtEl.classList.add('has-art')};
-      img2.onerror=()=>{mpArtEl.innerHTML='<div class="mp-art-ph">🎵</div>';mpArtEl.classList.remove('has-art')};
+      img2.onerror=()=>{
+        mpArtEl.style.backgroundImage='';mpArtEl.style.backgroundSize='';mpArtEl.style.backgroundPosition='';
+        mpArtEl.innerHTML='<div class="mp-art-ph">🎵</div>';mpArtEl.classList.remove('has-art')};
       img2.src=artUrl;
     }
     /* 배경 + hero 이미지 */
@@ -2538,6 +2559,13 @@ async function pollNowPlaying(){
   const trackStr=`${meta.artist}||${meta.title}`;
   if(trackStr===lastTrackStr)return;
   lastTrackStr=trackStr;
+  /* 트랙이 바뀌었을 때: 정규 인터벌을 취소하고 6초 뒤 한 번 더 빠르게 확인한 뒤
+     12초 주기로 복귀한다. 빠르게 연속으로 곡이 바뀌는 방송에서 지연을 줄여준다. */
+  if(npTimer){clearInterval(npTimer);npTimer=null}
+  npTimer=setTimeout(()=>{
+    pollNowPlaying();
+    npTimer=setInterval(pollNowPlaying,12000);
+  },6000);
   updateNowPlayingUI(meta.artist,meta.title,undefined);
   const art=await fetchAlbumArt(meta.artist,meta.title);
   if(lastTrackStr===`${meta.artist}||${meta.title}`){
