@@ -705,8 +705,26 @@ html,body{
 }
 .pp-marquee-wrap.short{-webkit-mask-image:none;mask-image:none}
 .pp-marquee-inner{display:inline-block;white-space:nowrap}
-.pp-marquee-wrap.scrolling .pp-marquee-inner{animation:mqScroll var(--mq-dur,12s) linear infinite}
-@keyframes mqScroll{0%{transform:translateX(0)}100%{transform:translateX(var(--mq-dist,-50%))}}
+/* 기존 마퀴 CSS 영역을 아래와 같이 수정 */
+.pp-marquee-wrap.scrolling .pp-marquee-inner {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform; /* GPU 가속 활성화 */
+  transform: translate3d(0, 0, 0); /* 3D 레이어 격리 */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  animation: mqScroll var(--mq-dur, 12s) linear infinite;
+}
+
+/* 0%에서 50%까지만 이동하는 대칭형 무한 루프로 수정 */
+@keyframes mqScroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0); /* 복제본과 원본의 위치가 완전히 일치하는 절반 시점에서 루프 */
+  }
+}
 .pp-title{font-size:17px;font-weight:700;letter-spacing:-.4px;color:#fff}
 .pp-artist{font-size:13px;color:var(--text3);margin-top:2px;display:block}
 
@@ -1811,51 +1829,80 @@ function setPlayIcon(playing){
 }
 
 /* ── marquee ── */
-function applyMarquee(wrapId,innerId,spanId,text){
-  const wrap=document.getElementById(wrapId);
-  const inner=document.getElementById(innerId);
-  const span=document.getElementById(spanId);
-  if(!wrap||!inner||!span)return;
-  span.textContent=text;
-  // remove clone
-  inner.querySelectorAll('.mq-clone').forEach(c=>c.remove());
+function applyMarquee(wrapId, innerId, spanId, text){
+  const wrap = document.getElementById(wrapId);
+  const inner = document.getElementById(innerId);
+  const span = document.getElementById(spanId);
+  if(!wrap || !inner || !span) return;
+  
+  span.textContent = text;
+  
+  // 기존 클론 일괄 삭제
+  inner.querySelectorAll('.mq-clone').forEach(c => c.remove());
   wrap.classList.remove('scrolling');
-  wrap.classList.add('short');
-  requestAnimationFrame(()=>{
-    const cW=wrap.offsetWidth, tW=span.offsetWidth;
-    if(tW<=cW)return;
-    const gap=72;
-    const clone=span.cloneNode(true);clone.classList.add('mq-clone');clone.style.paddingLeft=gap+'px';
+  wrap.classList.add('short'); // 일단 기본 상태로 리셋
+  
+  requestAnimationFrame(() => {
+    const cW = wrap.offsetWidth;
+    const tW = span.offsetWidth;
+    
+    // 텍스트가 wrap 영역보다 짧으면 마퀴 미실행
+    if(tW <= cW) return;
+    
+    // 자연스러운 공백 간격 (Apple Music 스타일)
+    const gap = 60; 
+    span.style.paddingRight = gap + 'px';
+    
+    // 완전히 동일한 구조의 클론을 생성하여 무한 루프 대칭을 맞춤
+    const clone = span.cloneNode(true);
+    clone.classList.add('mq-clone');
     inner.appendChild(clone);
-    const total=tW+gap;
-    inner.style.setProperty('--mq-dist',`-${total}px`);
-    inner.style.setProperty('--mq-dur',`${total/55}s`);
-    wrap.classList.remove('short');wrap.classList.add('scrolling');
+    
+    // 전체 움직여야 할 실제 텍스트+공백 폭 계산
+    const totalDistance = tW + gap;
+    
+    // 고정된 속도(예: 초당 40픽셀)로 흐르도록 듀레이션(초) 계산
+    const speed = 40; 
+    const duration = totalDistance / speed;
+    
+    // CSS 가속용 변수 세팅 (더 이상 -var px 연산을 하지 않고 무조건 -50%로 가속 처리)
+    inner.style.setProperty('--mq-dur', `${duration}s`);
+    
+    wrap.classList.remove('short');
+    wrap.classList.add('scrolling'); // 애니메이션 시작
   });
 }
 
-/* ── 가로화면 전용: mpTitle 마퀴 강제 실행 ── */
+/* ── 가로화면 전용 마퀴 함수도 동일한 메커니즘으로 수정 ── */
 function forceLandscapeMarquee(){
-  const isLandscape=window.matchMedia(
-    '(max-height:680px) and (orientation:landscape) and (max-width:960px)'
-  ).matches;
-  if(!isLandscape)return;
-  /* mpTitleWrap — short 클래스 제거 후 폭 재판정 */
-  const wrap=document.getElementById('mpTitleWrap');
-  const inner=document.getElementById('mpTitleInner');
-  const span=document.getElementById('mpTitle');
-  if(!wrap||!inner||!span||!span.textContent.trim()||span.textContent==='–')return;
-  inner.querySelectorAll('.mq-clone').forEach(c=>c.remove());
-  wrap.classList.remove('scrolling','short');
-  requestAnimationFrame(()=>{
-    const cW=wrap.offsetWidth, tW=span.offsetWidth;
-    if(tW<=cW){wrap.classList.add('short');return}
-    const gap=80;
-    const clone=span.cloneNode(true);clone.classList.add('mq-clone');clone.style.paddingLeft=gap+'px';
+  const isLandscape = window.matchMedia( '(max-height:680px) and (orientation:landscape) and (max-width:960px)' ).matches;
+  if(!isLandscape) return;
+  
+  const wrap = document.getElementById('mpTitleWrap');
+  const inner = document.getElementById('mpTitleInner');
+  const span = document.getElementById('mpTitle');
+  if(!wrap || !inner || !span || !span.textContent.trim() || span.textContent === '–') return;
+  
+  inner.querySelectorAll('.mq-clone').forEach(c => c.remove());
+  wrap.classList.remove('scrolling', 'short');
+  
+  requestAnimationFrame(() => {
+    const cW = wrap.offsetWidth;
+    const tW = span.offsetWidth;
+    if(tW <= cW){ wrap.classList.add('short'); return; }
+    
+    const gap = 60;
+    span.style.paddingRight = gap + 'px';
+    
+    const clone = span.cloneNode(true);
+    clone.classList.add('mq-clone');
     inner.appendChild(clone);
-    const total=tW+gap;
-    inner.style.setProperty('--mq-dist',`-${total}px`);
-    inner.style.setProperty('--mq-dur',`${total/55}s`);
+    
+    const totalDistance = tW + gap;
+    const speed = 40;
+    const duration = totalDistance / speed;
+    
+    inner.style.setProperty('--mq-dur', `${duration}s`);
     wrap.classList.add('scrolling');
   });
 }
