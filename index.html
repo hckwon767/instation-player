@@ -2014,8 +2014,8 @@ function playChannel(ch){
   if(hTitle){hTitle.classList.add('fading');setTimeout(()=>{hTitle.textContent=ch.name;hTitle.classList.remove('fading')},200)}
   if(hMeta){hMeta.classList.add('fading');setTimeout(()=>{hMeta.innerHTML='<span class="hero-np-loading">정보 불러오는 중…</span>';hMeta.classList.remove('fading')},200)}
   document.getElementById('heroOverlineText').textContent='NOW PLAYING · '+ch.cat;
-  const catB=document.getElementById('heroCatBadge');
-  if(catB){catB.textContent=ch.cat;catB.style.display=''}
+  /*   const catB=document.getElementById('heroCatBadge');
+  if(catB){catB.textContent=ch.cat;catB.style.display=''} */
   setHeroImage(imgSrc);
   const badge=document.getElementById('heroBadge');
   if(badge){document.getElementById('heroBadgeFreq').textContent=freq;badge.classList.add('visible')}
@@ -2390,8 +2390,8 @@ function playExtraChannel(ch){
   if(hTitle){hTitle.classList.add('fading');setTimeout(()=>{hTitle.textContent=name;hTitle.classList.remove('fading')},200)}
   if(hMeta){hMeta.classList.add('fading');setTimeout(()=>{hMeta.innerHTML='<span class="hero-np-loading">정보 불러오는 중…</span>';hMeta.classList.remove('fading')},200)}
   document.getElementById('heroOverlineText').textContent='EXTRA · '+ch.tag;
-  const catB=document.getElementById('heroCatBadge');
-  if(catB){catB.textContent=ch.tag;catB.style.display=''}
+  /*  const catB=document.getElementById('heroCatBadge');
+  if(catB){catB.textContent=ch.tag;catB.style.display=''} */
   setHeroImage(null);
   const badge=document.getElementById('heroBadge');
   if(badge){document.getElementById('heroBadgeFreq').textContent='EXTRA';badge.classList.add('visible')}
