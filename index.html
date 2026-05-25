@@ -1702,7 +1702,7 @@ function toListenUrl(u){try{const x=new URL(u);return`https://${x.hostname}/list
 
 /* ── on-air state ── */
 function setOnAir(on){
-  document.querySelectorAll('.on-air,.mp-on-air').forEach(el=>el.classList.toggle('live',on));
+  document.querySelectorAll('.on-air,.mob-on-air,.mp-on-air').forEach(el=>el.classList.toggle('live',on));
   document.getElementById('tabDot').classList.toggle('on',on);
 }
 
@@ -1720,7 +1720,8 @@ function clearAutoSkip(){if(autoSkipTimer){clearTimeout(autoSkipTimer);autoSkipT
 
 /* ── audio events ── */
 aud.addEventListener('playing',()=>{
-  isSkipping=false;setOnAir(true);clearConnectTimer();clearAutoSkip();updateMediaSession();
+  isSkipping=false;retryCount=0;clearTimeout(waitingTimer);waitingTimer=null;
+  setOnAir(true);clearConnectTimer();clearAutoSkip();startAutoSkip();updateMediaSession();
 });
 let waitingTimer=null;
 
@@ -1742,6 +1743,7 @@ aud.addEventListener('waiting',()=>{
 
 });
 aud.addEventListener('pause',()=>{
+  clearTimeout(waitingTimer);waitingTimer=null;
   setOnAir(false);clearAutoSkip();
   if('mediaSession' in navigator)navigator.mediaSession.playbackState='paused';
 });
@@ -1751,6 +1753,7 @@ const RETRY_DELAY=3000;
 
 aud.addEventListener('error',()=>{
 
+  clearTimeout(waitingTimer);waitingTimer=null;
   setOnAir(false);
   clearConnectTimer();
 
@@ -2070,6 +2073,8 @@ function playPrevChannel(){
   playChannel(prev);
 }
 function playNextChannel(doSkip=false){
+  if(isSkipping)return;
+  isSkipping=true;
   if(activeExtraIdx!==null){
     const cur=extraFiltered[activeExtraIdx];
     if(doSkip&&cur)skippedExtraUrls.add(cur.streamUrl);
@@ -2087,7 +2092,7 @@ function playNextChannel(doSkip=false){
   if(!activeId)return;
   if(doSkip)skippedIds.add(activeId);
   const avail=channels.filter(c=>!skippedIds.has(c.id));
-  if(!avail.length){setPlayIcon(false);return}
+  if(!avail.length){skippedIds.clear();setPlayIcon(false);return}
   const ci=channels.findIndex(c=>c.id===activeId);
   const next=avail.find(c=>channels.indexOf(c)>ci)||avail[0];
   playChannel(next);
