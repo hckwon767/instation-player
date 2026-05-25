@@ -715,7 +715,9 @@ html,body{
 }
 /* clickable album art — play/pause overlay */
 .pp-art{cursor:pointer;transition:box-shadow .8s ease}
-.pp-art:hover .pp-art-overlay{opacity:1}
+@media(hover:hover){
+  .pp-art:hover .pp-art-overlay{opacity:1}
+}
 .pp-art:active{transform:scale(.92)}
 .pp-art-overlay{
   position:absolute;inset:0;z-index:10;
@@ -1086,7 +1088,10 @@ html,body{
 /* mobile art: clickable play/pause overlay */
 .mp-art{cursor:pointer;transition:box-shadow .8s ease, transform .14s ease}
 .mp-art:active{transform:scale(.96)}
-.mp-art:hover .mp-art-overlay{opacity:1}
+/* :hover는 모바일 탭 후 고착되므로 실제 hover 가능 장치(데스크탑)에서만 적용 */
+@media(hover:hover){
+  .mp-art:hover .mp-art-overlay{opacity:1}
+}
 .mp-art-overlay{
   position:absolute;inset:0;z-index:10;
   display:flex;align-items:center;justify-content:center;
