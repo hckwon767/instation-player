@@ -235,7 +235,37 @@ html,body{
   background:#0c0c0c;
   box-shadow:0 40px 140px rgba(0,0,0,.75);
   isolation:isolate;
-  cursor:default;
+  cursor:pointer;
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+.hero-card:active{transform:scale(.993)}
+
+/* hero play/pause overlay — click flash only, no hover */
+.hero-art-overlay{
+  position:absolute;inset:0;z-index:5;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+  border-radius:inherit;
+}
+.hero-art-overlay-icon{
+  width:80px;height:80px;
+  border-radius:50%;
+  background:rgba(255,255,255,.18);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border:1.5px solid rgba(255,255,255,.35);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;
+}
+.hero-art-overlay-icon svg{width:32px;height:32px;fill:#fff;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5))}
+@keyframes heroIconFlash{
+  0%  {opacity:0;transform:scale(.7)}
+  20% {opacity:1;transform:scale(1.08)}
+  60% {opacity:1;transform:scale(1)}
+  100%{opacity:0;transform:scale(.9)}
+}
+.hero-art-overlay-icon.flash{
+  animation:heroIconFlash .7s cubic-bezier(.4,0,.2,1) forwards;
 }
 
 /* hero image layers */
@@ -683,8 +713,22 @@ html,body{
   display:flex;align-items:center;justify-content:center;
   font-size:22px;opacity:.4;
 }
+/* clickable album art — play/pause overlay */
+.pp-art{cursor:pointer;transition:box-shadow .8s ease}
+.pp-art:hover .pp-art-overlay{opacity:1}
+.pp-art:active{transform:scale(.92)}
+.pp-art-overlay{
+  position:absolute;inset:0;z-index:10;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.48);
+  opacity:0;
+  transition:opacity .18s ease;
+  border-radius:inherit;
+}
+.pp-art-overlay svg{width:22px;height:22px;fill:#fff;drop-shadow:0 2px 8px rgba(0,0,0,.5)}
+
 /* glow ring via box-shadow (::before conflicts with overflow:hidden) */
-.pp-art{transition:box-shadow .8s ease}
+.pp-art{transition:box-shadow .8s ease, transform .12s ease}
 .pp-art.has-art{
   animation:artGlow 3.5s ease-in-out infinite alternate;
 }
@@ -1039,8 +1083,22 @@ html,body{
 .mp-art.has-art{
   box-shadow:0 36px 90px rgba(0,0,0,.75),0 0 60px rgba(255,55,95,.12),0 0 0 1px rgba(255,255,255,.1);
 }
+/* mobile art: clickable play/pause overlay */
+.mp-art{cursor:pointer;transition:box-shadow .8s ease, transform .14s ease}
+.mp-art:active{transform:scale(.96)}
+.mp-art:hover .mp-art-overlay{opacity:1}
+.mp-art-overlay{
+  position:absolute;inset:0;z-index:10;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.38);
+  opacity:0;
+  transition:opacity .2s ease;
+  border-radius:inherit;
+}
+.mp-art-overlay svg{width:52px;height:52px;fill:#fff;filter:drop-shadow(0 4px 16px rgba(0,0,0,.6))}
+
 /* spinning glow on mp art — box-shadow (no ::before due to overflow:hidden) */
-.mp-art{transition:box-shadow .8s ease}
+.mp-art{transition:box-shadow .8s ease, transform .14s ease}
 .mp-art.has-art{
   box-shadow:0 36px 90px rgba(0,0,0,.75),0 0 60px rgba(255,55,95,.15),0 0 0 2px rgba(255,55,95,.3);
   animation:mpArtGlow 3.5s ease-in-out infinite alternate;
@@ -1389,6 +1447,10 @@ html,body{
   }
 }
 
+/* touch: brief overlay flash on tap */
+.mp-art:active .mp-art-overlay{opacity:1}
+.pp-art:active .pp-art-overlay{opacity:1}
+
 /* =============================================
    UTILITY
 ============================================= */
@@ -1435,10 +1497,15 @@ audio{display:none}
 
   <!-- HERO -->
   <div class="hero-wrap">
-    <div class="hero-card" id="heroCard">
+    <div class="hero-card" id="heroCard" onclick="togglePlay()">
       <div class="hero-img-a" id="heroImgA"></div>
       <div class="hero-img-b" id="heroImgB"></div>
       <div class="hero-grad"></div>
+      <div class="hero-art-overlay" id="heroArtOverlay">
+        <div class="hero-art-overlay-icon" id="heroArtOverlayIcon">
+          <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+        </div>
+      </div>
       <div class="hero-body">
         <div class="hero-overline">
           <div class="hero-overline-bar"></div>
@@ -1498,8 +1565,11 @@ audio{display:none}
     <div class="pp-glass"></div>
     <div class="pp-inner">
       <!-- art -->
-      <div class="pp-art" id="ppArt">
+      <div class="pp-art" id="ppArt" onclick="togglePlay()" title="재생 / 일시정지">
         <div class="pp-art-ph">🎵</div>
+        <div class="pp-art-overlay" id="ppArtOverlay">
+          <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+        </div>
       </div>
       <!-- track -->
       <div class="pp-track">
@@ -1572,7 +1642,7 @@ audio{display:none}
         </div>
       </div>
       <div class="mp-art-wrap">
-        <div class="mp-art" id="mpArt"><div class="mp-art-ph">🎵</div></div>
+        <div class="mp-art" id="mpArt" onclick="togglePlay()" title="재생 / 일시정지"><div class="mp-art-ph">🎵</div><div class="mp-art-overlay" id="mpArtOverlay"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
       </div>
       <div class="mp-right">
         <div class="mp-track">
@@ -1827,6 +1897,20 @@ function setPlayIcon(playing){
   if(hb)hb.innerHTML=(playing
     ?'<svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> 일시정지'
     :'<svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><polygon points="5,3 19,12 5,21"/></svg> 지금 재생');
+  /* art overlay icon sync */
+  const artOvIco=playing
+    ?'<svg viewBox="0 0 24 24" fill="#fff"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+    :'<svg viewBox="0 0 24 24" fill="#fff"><polygon points="5,3 19,12 5,21"/></svg>';
+  ['ppArtOverlay','mpArtOverlay'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=artOvIco});
+  const heroOv=document.getElementById('heroArtOverlayIcon');
+  if(heroOv){
+    heroOv.innerHTML=playing
+      ?'<svg viewBox="0 0 24 24" fill="#fff" width="32" height="32"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+      :'<svg viewBox="0 0 24 24" fill="#fff" width="32" height="32"><polygon points="5,3 19,12 5,21"/></svg>';
+    heroOv.classList.remove('flash');
+    void heroOv.offsetWidth; /* reflow */
+    heroOv.classList.add('flash');
+  }
 }
 
 /* ── art element reset (innerHTML 대신 부드럽게 초기화) ── */
@@ -2014,8 +2098,8 @@ function playChannel(ch){
   if(hTitle){hTitle.classList.add('fading');setTimeout(()=>{hTitle.textContent=ch.name;hTitle.classList.remove('fading')},200)}
   if(hMeta){hMeta.classList.add('fading');setTimeout(()=>{hMeta.innerHTML='<span class="hero-np-loading">정보 불러오는 중…</span>';hMeta.classList.remove('fading')},200)}
   document.getElementById('heroOverlineText').textContent='NOW PLAYING · '+ch.cat;
-  /*   const catB=document.getElementById('heroCatBadge');
-  if(catB){catB.textContent=ch.cat;catB.style.display=''} */
+  const catB=document.getElementById('heroCatBadge');
+/* ── 카테고리 표시 ── */
   setHeroImage(imgSrc);
   const badge=document.getElementById('heroBadge');
   if(badge){document.getElementById('heroBadgeFreq').textContent=freq;badge.classList.add('visible')}
@@ -2391,7 +2475,7 @@ function playExtraChannel(ch){
   if(hMeta){hMeta.classList.add('fading');setTimeout(()=>{hMeta.innerHTML='<span class="hero-np-loading">정보 불러오는 중…</span>';hMeta.classList.remove('fading')},200)}
   document.getElementById('heroOverlineText').textContent='EXTRA · '+ch.tag;
   /*  const catB=document.getElementById('heroCatBadge');
-  if(catB){catB.textContent=ch.tag;catB.style.display=''} */
+  if(catB){catB.textContent=ch.tag;catB.style.display=''}  */
   setHeroImage(null);
   const badge=document.getElementById('heroBadge');
   if(badge){document.getElementById('heroBadgeFreq').textContent='EXTRA';badge.classList.add('visible')}
