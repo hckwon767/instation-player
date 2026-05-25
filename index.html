@@ -1447,9 +1447,7 @@ html,body{
   }
 }
 
-/* touch: brief overlay flash on tap */
-.mp-art:active .mp-art-overlay{opacity:1}
-.pp-art:active .pp-art-overlay{opacity:1}
+/* touch: overlay flash handled via JS (see artTouchFlash) */
 
 /* =============================================
    UTILITY
@@ -2134,6 +2132,32 @@ function togglePlay(){
   if(aud.paused){aud.play().catch(()=>{});setPlayIcon(true);startNowPlaying();startAutoSkip()}
   else{aud.pause();setPlayIcon(false);stopNowPlaying()}
 }
+
+/* ── 앨범아트 터치 오버레이 플래시 (모바일) ──
+   :active CSS는 iOS에서 touchend 후에도 고착되므로
+   JS로 직접 opacity를 켜고 600 ms 후 끕니다. */
+(function(){
+  let _artOverlayTimer = null;
+  function artTouchFlash(overlayEl){
+    if(!overlayEl) return;
+    if(_artOverlayTimer){ clearTimeout(_artOverlayTimer); _artOverlayTimer = null; }
+    overlayEl.style.opacity = '1';
+    _artOverlayTimer = setTimeout(()=>{
+      overlayEl.style.opacity = '';
+      _artOverlayTimer = null;
+    }, 600);
+  }
+  function attachArtTouch(artId, overlayId){
+    const art = document.getElementById(artId);
+    const ov  = document.getElementById(overlayId);
+    if(!art || !ov) return;
+    art.addEventListener('touchstart', ()=>{ ov.style.opacity = '1'; }, {passive:true});
+    art.addEventListener('touchend',   ()=>{ artTouchFlash(ov); },      {passive:true});
+    art.addEventListener('touchcancel',()=>{ ov.style.opacity = ''; },  {passive:true});
+  }
+  attachArtTouch('mpArt', 'mpArtOverlay');
+  attachArtTouch('ppArt', 'ppArtOverlay');
+})();
 
 /* ── channel navigation ── */
 function playPrevChannel(){
