@@ -1792,11 +1792,15 @@ function startAutoSkip(){
 function clearAutoSkip(){if(autoSkipTimer){clearTimeout(autoSkipTimer);autoSkipTimer=null}}
 
 /* ── audio events ── */
+let waitingTimer=null;
+let retryCount=0;
+const MAX_RETRIES=3;
+const RETRY_DELAY=3000;
+
 aud.addEventListener('playing',()=>{
   isSkipping=false;retryCount=0;clearTimeout(waitingTimer);waitingTimer=null;
   setOnAir(true);clearConnectTimer();clearAutoSkip();startAutoSkip();updateMediaSession();
 });
-let waitingTimer=null;
 
 aud.addEventListener('waiting',()=>{
 
@@ -1820,9 +1824,6 @@ aud.addEventListener('pause',()=>{
   setOnAir(false);clearAutoSkip();
   if('mediaSession' in navigator)navigator.mediaSession.playbackState='paused';
 });
-let retryCount=0;
-const MAX_RETRIES=3;
-const RETRY_DELAY=3000;
 
 aud.addEventListener('error',()=>{
 
@@ -1861,10 +1862,16 @@ aud.addEventListener('stalled',()=>{setOnAir(false);clearConnectTimer();if(!isSk
 /* ── visibility ── */
 let _wasPlaying=false;
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='hidden'){_wasPlaying=!aud.paused;clearConnectTimer();clearAutoSkip()}
+  if(document.visibilityState==='hidden'){_wasPlaying=!aud.paused;clearConnectTimer();clearAutoSkip();stopNowPlaying()}
   else if(_wasPlaying){
-    if(aud.paused||aud.readyState<2){const s=aud.src;if(s){aud.src=s;aud.play().catch(()=>{});startConnectTimer()}}
-    else startAutoSkip();
+    if(aud.paused||aud.readyState<2){
+      const s=aud.src;
+      if(s){aud.src=s;aud.play().catch(()=>{});startConnectTimer();}
+      startNowPlaying();
+    } else {
+      startAutoSkip();
+      startNowPlaying();
+    }
   }
 });
 
@@ -2010,7 +2017,7 @@ function forceLandscapeMarquee(){
 /* ── 공통 crossfade 헬퍼 ──
    next 레이어에 이미지를 preload한 뒤 active 전환.
    url=null 이면 즉시 curr 제거(배경 없음 상태로). */
-function _crossfade(nextEl, currEl, url, onReady){
+function _crossfade(nextEl, currEl, url, onReady, onError){
   if(!url){
     /* 이미지 없음 → 즉시 curr 숨기고 next도 빈 상태 */
     nextEl.style.backgroundImage = 'none';
@@ -2031,7 +2038,8 @@ function _crossfade(nextEl, currEl, url, onReady){
     });
   };
   tmp.onerror = () => {
-    /* 로드 실패 → 조용히 curr 유지 */
+    /* 로드 실패 → curr 유지, 슬롯 롤백 콜백 호출 */
+    if(onError) onError();
     if(onReady) onReady();
   };
   tmp.src = url;
@@ -2044,7 +2052,7 @@ function setHeroImage(url){
   const next = document.getElementById(isA ? 'heroImgB' : 'heroImgA');
   const curr = document.getElementById(isA ? 'heroImgA' : 'heroImgB');
   heroImgSlot = isA ? 'b' : 'a';
-  _crossfade(next, curr, url);
+  _crossfade(next, curr, url, null, ()=>{ heroImgSlot = isA ? 'a' : 'b'; });
 }
 
 /* ── immersive bg ── */
@@ -2054,7 +2062,7 @@ function setImmersiveBg(url){
   const next = document.getElementById(isA ? 'bgB' : 'bgA');
   const curr = document.getElementById(isA ? 'bgA' : 'bgB');
   bgSlot = isA ? 'b' : 'a';
-  _crossfade(next, curr, url);
+  _crossfade(next, curr, url, null, ()=>{ bgSlot = isA ? 'a' : 'b'; });
 }
 
 /* ── player pill bg ── */
@@ -2064,7 +2072,7 @@ function setPpBg(url){
   const next = document.getElementById(isA ? 'ppBgB' : 'ppBgA');
   const curr = document.getElementById(isA ? 'ppBgA' : 'ppBgB');
   ppSlot = isA ? 'b' : 'a';
-  _crossfade(next, curr, url);
+  _crossfade(next, curr, url, null, ()=>{ ppSlot = isA ? 'a' : 'b'; });
 }
 
 /* ── mobile player bg ── */
@@ -2074,7 +2082,7 @@ function setMpBg(url){
   const next = document.getElementById(isA ? 'mpBgB' : 'mpBgA');
   const curr = document.getElementById(isA ? 'mpBgA' : 'mpBgB');
   mpSlot = isA ? 'b' : 'a';
-  _crossfade(next, curr, url);
+  _crossfade(next, curr, url, null, ()=>{ mpSlot = isA ? 'a' : 'b'; });
 }
 
 /* ── show player pill ── */
@@ -2186,7 +2194,9 @@ function playPrevChannel(){
   playChannel(prev);
 }
 function playNextChannel(doSkip=false){
-  if(isSkipping)return;
+  /* 자동 스킵(타이머/에러)은 이미 스킵 중이면 무시.
+     사용자 클릭(doSkip=false)은 항상 허용. */
+  if(doSkip&&isSkipping)return;
   isSkipping=true;
   if(activeExtraIdx!==null){
     const cur=extraFiltered[activeExtraIdx];
@@ -2440,6 +2450,8 @@ function renderDtExtraList(tag){
   document.querySelectorAll('#dtExtraChips .fchip').forEach(b=>b.classList.toggle('active',b.dataset.tag===tag));
   const list=document.getElementById('dtExtraList');if(!list)return;
   const items=getExtraFiltered().filter(c=>!skippedExtraUrls.has(c.streamUrl));
+  /* 렌더 시점에 extraFiltered 확정 → activeExtraIdx와 항상 동기화 */
+  extraFiltered=items;
   list.innerHTML='';
   if(!items.length){list.innerHTML='<div style="padding:20px 20px;color:rgba(255,255,255,.3);font-size:12px">채널 없음</div>';return}
   items.forEach((ch,i)=>{
@@ -2458,7 +2470,7 @@ function renderDtExtraList(tag){
         <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
       </div>`;
     loadExtraThumb(el.querySelector('.ex-thumb img'),ch.tag);
-    el.onclick=()=>{extraFiltered=items;activeExtraIdx=i;playExtraChannel(ch)};
+    el.onclick=()=>{activeExtraIdx=i;playExtraChannel(ch)};
     list.appendChild(el);
   });
 }
@@ -2468,6 +2480,8 @@ function renderMobExtraList(tag){
   document.querySelectorAll('#mobExtraChips .fchip').forEach(b=>b.classList.toggle('active',b.dataset.tag===tag));
   const list=document.getElementById('mobExtraList');if(!list)return;
   const items=getExtraFiltered().filter(c=>!skippedExtraUrls.has(c.streamUrl));
+  /* 렌더 시점에 extraFiltered 확정 → activeExtraIdx와 항상 동기화 */
+  extraFiltered=items;
   list.innerHTML='';
   if(!items.length){list.innerHTML='<div style="padding:20px;color:rgba(255,255,255,.3);font-size:12px">채널 없음</div>';return}
   items.forEach((ch,i)=>{
@@ -2486,7 +2500,7 @@ function renderMobExtraList(tag){
         <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
       </div>`;
     loadExtraThumb(el.querySelector('.ex-thumb img'),ch.tag);
-    el.onclick=()=>{extraFiltered=items;activeExtraIdx=i;playExtraChannel(ch);if(isMobile())mobTab('player')};
+    el.onclick=()=>{activeExtraIdx=i;playExtraChannel(ch);if(isMobile())mobTab('player')};
     list.appendChild(el);
   });
 }
