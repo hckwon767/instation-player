@@ -1785,10 +1785,8 @@ function startConnectTimer(){
   connectTimer=setTimeout(()=>{isSkipping=true;playNextChannel(true)},CONNECT_TIMEOUT_SEC*1000);
 }
 function clearConnectTimer(){if(connectTimer){clearTimeout(connectTimer);connectTimer=null}}
-function startAutoSkip(){
-  clearAutoSkip();
-  autoSkipTimer=setTimeout(()=>{isSkipping=true;playNextChannel(true)},AUTO_SKIP_SEC*1000);
-}
+/* autoSkip은 connectTimer 보조용으로만 유지 — 정상 재생 중에는 호출하지 않음 */
+function startAutoSkip(){clearAutoSkip()}
 function clearAutoSkip(){if(autoSkipTimer){clearTimeout(autoSkipTimer);autoSkipTimer=null}}
 
 /* ── audio events ── */
@@ -1799,7 +1797,7 @@ const RETRY_DELAY=3000;
 
 aud.addEventListener('playing',()=>{
   isSkipping=false;retryCount=0;clearTimeout(waitingTimer);waitingTimer=null;
-  setOnAir(true);clearConnectTimer();clearAutoSkip();startAutoSkip();updateMediaSession();
+  setOnAir(true);clearConnectTimer();clearAutoSkip();updateMediaSession();
 });
 
 aud.addEventListener('waiting',()=>{
@@ -2201,21 +2199,32 @@ function playNextChannel(doSkip=false){
   if(activeExtraIdx!==null){
     const cur=extraFiltered[activeExtraIdx];
     if(doSkip&&cur)skippedExtraUrls.add(cur.streamUrl);
-    /* extraFiltered 기준 현재 위치 이후부터 순서대로 스킵 안 된 채널 탐색 */
     const total=extraFiltered.length;
     let next=null;
     for(let offset=1;offset<=total;offset++){
       const candidate=extraFiltered[(activeExtraIdx+offset)%total];
       if(!skippedExtraUrls.has(candidate.streamUrl)){next=candidate;break}
     }
-    if(!next){setPlayIcon(false);return}
+    /* 모든 extra 채널 소진 → skipped 초기화 후 다음 채널부터 재시작 */
+    if(!next){
+      skippedExtraUrls.clear();
+      const fallback=extraFiltered[(activeExtraIdx+1)%total];
+      if(!fallback){isSkipping=false;return}
+      activeExtraIdx=extraFiltered.indexOf(fallback);
+      playExtraChannel(fallback);return;
+    }
     activeExtraIdx=extraFiltered.indexOf(next);
     playExtraChannel(next);return;
   }
   if(!activeId)return;
   if(doSkip)skippedIds.add(activeId);
-  const avail=channels.filter(c=>!skippedIds.has(c.id));
-  if(!avail.length){skippedIds.clear();setPlayIcon(false);return}
+  let avail=channels.filter(c=>!skippedIds.has(c.id));
+  /* 모든 일반 채널 소진 → skipped 초기화 후 재시작 */
+  if(!avail.length){
+    skippedIds.clear();
+    avail=channels.slice();
+  }
+  if(!avail.length){isSkipping=false;return}
   const ci=channels.findIndex(c=>c.id===activeId);
   const next=avail.find(c=>channels.indexOf(c)>ci)||avail[0];
   playChannel(next);
@@ -2764,7 +2773,7 @@ function startNowPlaying(){
 }
 function stopNowPlaying(){
   if(npTimer){clearInterval(npTimer);npTimer=null}
-  clearAutoSkip();setOnAir(false);
+  setOnAir(false);
   const ppA=document.getElementById('ppArt'),mpA=document.getElementById('mpArt');
   resetArtEl(ppA,'pp-art-ph');
   resetArtEl(mpA,'mp-art-ph');
